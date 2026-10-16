@@ -10,8 +10,8 @@
 <style>
 /* Layout de celular em pé: cabeçalho com o personagem, palco ocupando o resto, barra de ferramentas no alcance do polegar. */
 :root{
-  --bg:#1F1B2E; --ink:#1F1B2E; --paper:#FFFFFF; --muted:#5B5670;
-  --stage:#2B2545; --stage-dot:#332C52; --accent:#D92556; --accent-2:#FFC531;
+  --bg:#1F1B2E; --ink:#1F1B2E;
+  --stage:#2B2545; --stage-dot:#332C52; --accent-2:#FFC531;
   --display:'Bowlby One','Arial Black',system-ui,sans-serif; --body:'Nunito',system-ui,-apple-system,sans-serif;
 }
 *{box-sizing:border-box}
@@ -42,8 +42,6 @@ header p{margin:2px 0 0;font-size:13px;font-weight:800;color:#C9C3E0;white-space
   background-color:var(--stage);
   background-image:radial-gradient(ellipse 60% 70% at 50% 45%,rgba(255,255,255,.12) 0,transparent 70%),radial-gradient(var(--stage-dot) 22%,transparent 24%);
   background-size:100% 100%,22px 22px}
-.floor{display:none;position:absolute;left:0;right:0;top:0;height:100%;background:#3B3560;border-top:3px solid #1F1B2E;pointer-events:none;will-change:transform;transform:translateY(78%)}
-.shadow{display:none;position:absolute;left:50%;top:0;will-change:transform;width:46%;height:5%;margin-left:-23%;border-radius:50%;background:rgba(31,27,46,.32);filter:blur(5px);pointer-events:none}
 .stage::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:1;border-radius:22px;background:radial-gradient(ellipse 75% 65% at 50% 42%,transparent 55%,rgba(40,30,30,.28) 100%)}
 .stage svg.fx,.bubble,.hint,.spin,.loading{z-index:2}
 .stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
@@ -54,7 +52,7 @@ header p{margin:2px 0 0;font-size:13px;font-weight:800;color:#C9C3E0;white-space
 .bubble::after{content:"";position:absolute;left:50%;bottom:-12px;margin-left:-9px;border:9px solid transparent;border-top-color:var(--ink);border-bottom:0}
 .bubble.pop{animation:pop .22s ease-out}
 @keyframes pop{0%{transform:translateX(-50%) scale(.7)}70%{transform:translateX(-50%) scale(1.07)}100%{transform:translateX(-50%) scale(1)}}
-.hint{position:absolute;left:0;right:0;bottom:70px;text-align:center;color:#fff;font-weight:800;font-size:13px;opacity:.95;text-shadow:0 1px 0 #1F1B2E,0 -1px 0 #1F1B2E,1px 0 0 #1F1B2E,-1px 0 0 #1F1B2E,0 2px 4px rgba(0,0,0,.4);pointer-events:none;
+.hint{position:absolute;left:0;right:0;bottom:70px;text-align:center;color:#fff;font-weight:800;font-size:13px;opacity:.95;pointer-events:none;
   text-shadow:0 1px 2px rgba(0,0,0,.45);transition:opacity .6s}
 .hint.gone{opacity:0}
 .ono{font-family:var(--display);font-size:30px;fill:#fff;stroke:var(--ink);stroke-width:6px;paint-order:stroke;text-anchor:middle;dominant-baseline:middle}
@@ -90,10 +88,6 @@ header p{margin:2px 0 0;font-size:13px;font-weight:800;color:#C9C3E0;white-space
   text-shadow:0 2px 0 var(--ink);pointer-events:none}
 /* barra de giro: arrastar gira o boneco; as marquinhas correm junto como uma roda */
 .spin{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);width:min(88%,340px);display:flex;align-items:center;gap:8px}
-.spin button{width:44px;height:44px;flex-shrink:0;border-radius:50%;border:3px solid #fff;background:rgba(31,27,46,.55);color:#fff;
-  display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
-.spin button:active{transform:scale(.92)}
-.spin button svg{width:22px;height:22px}
 .track{flex:1;height:44px;border-radius:22px;border:3px solid #fff;background-color:rgba(31,27,46,.55);cursor:grab;touch-action:none;position:relative;overflow:hidden;
   background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.55) 0 3px,transparent 3px 18px);background-size:18px 7px;background-repeat:repeat-x;background-position:0 calc(100% - 4px)}
 .track:active{cursor:grabbing}
@@ -113,8 +107,6 @@ header p{margin:2px 0 0;font-size:13px;font-weight:800;color:#C9C3E0;white-space
     <button class="round" id="mute" aria-label="Som ligado" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path id="wave" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
   </header>
   <div class="stage" id="stage">
-    <div class="floor"></div>
-    <div class="shadow" id="shadow"></div>
     <canvas id="cv" tabindex="0" role="button" aria-label="Boneco. Toque para usar a ferramenta escolhida. Arraste fora dele, ou use dois dedos, para girar. As setas do teclado também giram."></canvas>
     <svg class="fx" id="fx" aria-hidden="true"></svg>
     <div class="bubble" id="bubble" aria-live="polite"></div>
@@ -136,7 +128,7 @@ header p{margin:2px 0 0;font-size:13px;font-weight:800;color:#C9C3E0;white-space
    João Bobo 3 — fase 1: bonecos de vinil, visual cartoon, física e toque.
    Sem bibliotecas. Módulos, nesta ordem:
    1 util e matrizes · 2 formas (SDF) · 3 malhador · 4 personagens
-   5 WebGL e shaders · 6 malhas · 7 braços · 8 estado, física e rosto
+   5 WebGL e shaders · 6 malhas · 7 corpo (esqueleto e física) · 8 estado e rosto
    9 efeitos, som e falas · 10 ferramentas e toque · 11 laço
    ===================================================================== */
 
@@ -200,26 +192,12 @@ function cap(x,y,z,ax,ay,az,bx,by,bz,r){
   const h=clamp((px*ux+py*uy+pz*uz)/(ux*ux+uy*uy+uz*uz),0,1);
   return len3(px-ux*h,py-uy*h,pz-uz*h)-r;
 }
-const torusZ=(x,y,z,R,r)=>Math.hypot(Math.hypot(x,y)-R,z)-r;      /* argola de frente para a câmera */
 const smin=(a,b,k)=>{const h=clamp(.5+.5*(b-a)/k,0,1);return b+(a-b)*h-k*h*(1-h);};
-const smax=(a,b,k)=>-smin(-a,-b,k);
-/* peças comuns a todo boneco: base de meia bola (raio 1, topo plano em y=1), perninhas e sapatos */
-const NECK=1.42, HIP=.66, PIV=.12;
-/* proporções em teste: s = escala da cabeça, dL = quanto as pernas crescem */
-/* w = largura do corpo, a = comprimento dos braços */
-const PROPS=[{id:'atual',name:'Atual',s:1,dL:0},{id:'c20',name:'−20%',s:.8,dL:0},{id:'c25',name:'−25%',s:.75,dL:0},
-  {id:'esguio',name:'Esguio',s:.8,dL:.09},{id:'baixo',name:'Baixinho',s:.8,dL:-.11},{id:'gordo',name:'Gordinho',s:.8,dL:0,w:1.15},{id:'bracos',name:'Braços',s:.8,dL:0,a:1.25}];
-const PW=()=>PROP.w||1, PA=()=>PROP.a||1;
-/* membros invisíveis (teste): só mãos e pés, maiores e mais de desenho animado */
-let FLOAT=true;
-/* ombro → cotovelo/mão: corpo mais largo afasta o ombro; braço mais longo estica a partir dele */
-function armXf(p,side){const sh=[side*.46,1.24,.02], a=PA(); return [side*.46*PW()+(p[0]-sh[0])*a,sh[1]+(p[1]-sh[1])*a,sh[2]+(p[2]-sh[2])*a];}
-/* o corpo desenhado fica mais largo em x e z, sem mudar a altura */
-const bodyS=()=>M4.S(PW(),1,PW());
+const NECK=1.42;
+/* proporção do boneco: s = escala da cabeça, dL = quanto as pernas crescem */
+const PROP={s:.8,dL:.09};
+/* corpo-bolinha: matriz do peito com o amassado dos golpes */
 function ballM(){const q=S.sq||0; return M4.chain(CHESTM,M4.T(0,BALL_C,0),M4.S(1+q*.45,1-q,1+q*.45),M4.T(0,-BALL_C,0));}
-let PROP=PROPS.find(p=>p.id==='esguio');
-/* tronco comum: barriga de vinil com quadril onde as pernas de sanfona encaixam */
-const torsoSD=(x,y,z,w,d)=>smin(ell(x,y-1.02,z,w,.44,d),ell(x,y-.72,z,w*.86,.2,d*.9),.14);
 
 /* ---------- 3. malhador (surface nets com passada grossa para pular o vazio) ---------- */
 function meshSDF(sdf,colFn,b0,b1,h){
@@ -298,38 +276,9 @@ function sphereMesh(su,sv){
   return {pos:new Float32Array(P),idx:new Uint16Array(I)};
 }
 
-/* formatos de nariz: peças (bolotas) no espaço do nariz [x,y,z, raio x,y,z, inclinação] — origem no meio do nariz, na frente da cara */
-const NOSES=[
- ['Batata (atual)',[{t:'b',p:[0,0,0],s:[.21,.17,.17]}]],
- ['Pirâmide facetada',[{t:'p',p:[0,0,-.06],s:[.22,.22,.36],r:[-.15,0,.785]}]],
- ['Bico de corvo',[{t:'c',p:[0,.06,-.02],s:[.12,.13,.46],r:[.55,0,0]}]],
- ['Focinho de porco',[{t:'y',p:[0,0,-.02],s:[.2,.15,.18]},{t:'b',p:[-.07,0,.165],s:[.04,.06,.012],ink:1},{t:'b',p:[.07,0,.165],s:[.04,.06,.012],ink:1}]],
- ['Só narinas',[{t:'b',p:[-.06,-.02,.1],s:[.035,.025,.02],ink:1},{t:'b',p:[.06,-.02,.1],s:[.035,.025,.02],ink:1}]],
- ['Bloco quadrado',[{t:'x',p:[0,0,.04],s:[.15,.14,.12],r:[-.1,0,0]}]],
- ['Gota (ponte + bolota)',[{t:'c',p:[0,.0,.02],s:[.13,.1,.34],r:[-1.35,0,0]},{t:'b',p:[0,-.04,.1],s:[.17,.16,.15]}]],
- ['Romano (desde a testa)',[{t:'b',p:[0,.2,.02],s:[.08,.27,.1],r:[.25,0,0]},{t:'b',p:[0,.04,.1],s:[.1,.12,.11]}]],
- ['Morangão com poros',[{t:'b',p:[0,0,.08],s:[.26,.22,.22],col:[1.05,.78,.82]},{t:'b',p:[-.1,.07,.27],s:[.012,.012,.008],ink:1},{t:'b',p:[.06,.1,.28],s:[.012,.012,.008],ink:1},{t:'b',p:[.13,-.02,.25],s:[.012,.012,.008],ink:1},{t:'b',p:[-.03,-.07,.29],s:[.012,.012,.008],ink:1},{t:'b',p:[.03,.02,.3],s:[.012,.012,.008],ink:1}]],
- ['Três bolinhas (W)',[{t:'b',p:[-.13,-.04,.03],s:[.1,.09,.1]},{t:'b',p:[.13,-.04,.03],s:[.1,.09,.1]},{t:'b',p:[0,.01,.08],s:[.12,.12,.12]}]],
- ['Fininho em L',[{t:'b',p:[0,.13,.02],s:[.04,.2,.07]},{t:'b',p:[.04,-.06,.09],s:[.09,.05,.06],r:[0,0,-.3]}]],
-];
-let NOSE_I=0;
 const NOSE_Y=-.26;   /* altura do nariz (em relação ao centro da cabeça): bem acima da boca, mesmo quebrado */
 /* ---------- 4. personagens: cada um é uma ficha ----------
-   cabeça: formas no espaço do modelo (centro da cabeça em hc); rosto: olhos, sobrancelhas e boca;
-   corpo e acessórios; cores dos braços; expressões por humor; falas. */
-const blend=(c,k,t)=>[mix(c[0],k[0],t),mix(c[1],k[1],t),mix(c[2],k[2],t)];
-/* cabelo do Guile (flat-top), marrom: laterais raspadas rente à cabeça + bloco alto e chato em cima, inclinado pra frente.
-   Coordenadas da cabeça (centro y=2.42, raio 1.12). É peça da cabeça: acompanha, tem contorno e tocar nele conta como golpe na cabeça */
-function hairGuile(x,y,z){
-  const HY=2.42, HR=1.12, r=len3(x,y-HY,z), ph=.12+.55*sstep(.15,.95,z/HR);
-  const side=smax(r-(HR+.028),ph-(y-HY),.03);                 /* laterais raspadas, rente à cabeça */
-  /* bloco do Guile: lados retos (paredes verticais), topo reto, e a frente sai da testa direto na diagonal pra frente */
-  const sl=.34, zf=.96+(y-(HY+.62))*sl, front=(z-zf)/Math.sqrt(1+sl*sl);
-  let blk=smax(Math.abs(x)-.68,(y-HY)-(1.74+.06*z),.04);
-  blk=smax(blk,front,.04); blk=smax(blk,-.6-z,.04); blk=smax(blk,(HY+.3)-y,.02);
-  return smin(side,blk,.05);
-}
-const hairCol=(x,y,z)=>len3(x,y-2.42,z)<1.12+.07?[.27,.18,.12]:[.42,.27,.17];   /* raspado (rente à cabeça) mais escuro, o bloco mais claro */
+   cabeça: formas no espaço do modelo (centro da cabeça em hc); rosto: olhos e boca; acessórios; falas. */
 /* cabelo 20 "espetado com gel": a cabeça quadriculada como um tabuleiro (grade de cubo projetada na esfera, casas quase iguais)
    e em cada casa uma pirâmide de base quadrada, todas do mesmo tamanho e altura. As bases encostam umas nas outras: sem área lisa.
    Low-poly: 4 triângulos por pirâmide. Faces com vértices próprios (sombreado chapado); o contorno usa uma cópia com vértices
@@ -381,12 +330,9 @@ function shavedMesh(){
   return {mesh:{pos:new Float32Array(P),idx:new Uint16Array(I),col:new Uint8Array(C),nv:P.length/3}};
 }
 const CHARS=[{
-  id:'base', name:'João Bobo', tag:'Bate que ele aguenta. (Ou não.)', pitch:1, voice:'triangle',
-  hc:[0,2.42,0], headR:1.12, skin:[.93,.92,.96], iris:[.22,.22,.28], ink:[.12,.1,.12],
-  eye:{x:.38,y:.1,z:.9,r:.25}, brow:{y:.24,len:.19,thick:.026,col:[.2,.18,.25]},
-  mouth:{y:-.7,z:.96,w:.22,teeth:'row'},
-  arms:{sleeve:null,sleeveTo:0,skin:[.93,.92,.96],band:null},
-  legs:{a:[.97,.96,.94],b:[.97,.96,.94]}, shoe:[.97,.96,.94], sole:[.78,.77,.76],
+  id:'base', name:'João Bobo', tag:'Bate que ele aguenta. (Ou não.)',
+  hc:[0,2.42,0], headR:1.12, skin:[.93,.92,.96], ink:[.12,.1,.12],
+  eye:{y:.1}, mouth:{y:-.7,z:.96}, shoe:[.97,.96,.94], sole:[.78,.77,.76],
   sdHead(x,y,z){
     const h=this.hc; x-=h[0]; y-=h[1]; z-=h[2];
     let d=sph(x,y,z,1.12);
@@ -394,33 +340,13 @@ const CHARS=[{
     return smin(d,cap(x,y,z,0,NECK-h[1]-.12,0,0,-.8,0,.15),.08);
   },
   colHead(x,y,z){return this.skin.slice();},
-  sdBody(x,y,z){return smin(torsoSD(x,y,z,.48,.38),Math.hypot(Math.hypot(x,z)-.18,y-1.45)-.05,.03);},
-  colBody(x,y,z){
-    const seam=[.66,.64,.76];
-    if(Math.abs(y-.86)<.012||y>1.4) return seam;
-    for(const s of [-1,1]){const d=Math.hypot(x-s*SHOULDER[0],y-SHOULDER[1],z-SHOULDER[2]); if(Math.abs(d-.17)<.014) return seam;}
-    return this.skin.slice();
-  },
   acc:[{on:'head',gloss:.05,mesh:shavedMesh,noOut:1},{on:'head',gloss:.15,mesh:hairGelMesh}],
-  face:{
-    calm:{lidU:.6,lidL:-.85,pupil:.5,browA:0,browY:0,open:0,smileL:.35,smileR:.35,w:1},
-    dizzy:{lidU:.15,lidL:-.55,pupil:.3,browA:.35,browY:.04,open:.3,smileL:-.35,smileR:.3,w:.9},
-    fall:{lidU:.8,lidL:-.92,pupil:.05,browA:.5,browY:.2,open:.85,smileL:-.1,smileR:-.1,w:.6},
-    floor:{lidU:-.2,lidL:-.3,pupil:.3,browA:.4,browY:.06,open:.35,smileL:-.6,smileR:-.6,w:1},
-    effort:{lidU:0,lidL:-.4,pupil:.3,browA:-.35,browY:-.04,open:.12,smileL:-.7,smileR:-.7,w:1.25},
-    ouch:{lidU:-.12,lidL:-.25,pupil:.25,browA:.4,browY:.1,open:.75,smileL:-.5,smileR:-.5,w:1.1},
-    mad:{lidU:.45,lidL:-.75,pupil:.3,browA:-.45,browY:-.04,open:.2,smileL:-.5,smileR:-.5,w:1},
-    scared:{lidU:.75,lidL:-.9,pupil:.08,browA:.55,browY:.16,open:.55,smileL:-.8,smileR:-.8,w:.9}
-  },
   lines:{
     idle:['Oi.','E aí?','Vai ficar só olhando?','Duvido me derrubar.','Tô de boa.','Pode vir.'],
     mad:['Ei!','Qual é a tua?','Tá doendo, ô!','Vem! Vem que tem!','Me respeita!','Tá achando que é quem?','Covarde!','Isso não vai ficar assim!','Otário!','Vacilão!','Cê é muito mané!'],
     xinga:['Otário!','Seu mané!','Bobão!','Vacilão!','Palhaço!','Trouxa!','Zé ruela!','Cara de mamão!','Pé de chinelo!','Cabeça de bagre!','Mão de alface!','Seu tapado!','Bate que nem velha!','Fracote!','Babaca!'],
     flip:['Toma!','Pra você!','Ó aqui, ó!','Senta lá!','Gostou? Toma!','Toma, otário!','Pra você, mané!','Ó o presente!'],
-    shake:['Vem pro pau!','Segura eu!','Eu te pego!','Vem, se for homem!'],
-    scared:['Para, para!','Socorro!','Chega!'],
     hit:['Ai!','Ui!','Opa!','Uh!'],
-    arm:['Meu braço!','Ai, o braço!'],
     fall:['Opa—','Ai, caí!','Uoooh!'],
     ground:['Me deixa aqui…','Tô vendo estrelinha.','Ai, o chão…'],
     up:['Ainda não acabou!','Foi sorte!','Isso não acabou!','Nem doeu!'],
@@ -436,13 +362,11 @@ function note(t){const d=document.createElement('div');d.className='note';d.text
 if(!gl){note('Este navegador não abriu o 3D (WebGL indisponível).');return;}
 const VS=`
 attribute vec3 aPos; attribute vec3 aNor; attribute vec4 aCol;
-uniform mat4 uM, uM2, uVP; uniform float uOutline, uAspect, uBend;
+uniform mat4 uM, uVP; uniform float uOutline, uAspect;
 varying vec3 vW, vN, vL, vNL; varying vec4 vCol;
 void main(){
-  /* corpo: a parte de cima segue o peito, a de baixo o quadril (a coluna dobra) */
-  float k=uBend*smoothstep(.86,1.22,aPos.y);
-  vec4 w=mix(uM*vec4(aPos,1.),uM2*vec4(aPos,1.),k);
-  vW=w.xyz; vN=mix(uM*vec4(aNor,0.),uM2*vec4(aNor,0.),k).xyz; vL=aPos; vNL=aNor; vCol=aCol;
+  vec4 w=uM*vec4(aPos,1.);
+  vW=w.xyz; vN=(uM*vec4(aNor,0.)).xyz; vL=aPos; vNL=aNor; vCol=aCol;
   gl_Position=uVP*w;
   if(uOutline>0.){
     /* contorno de largura constante na tela: empurra a casca invertida pela normal projetada */
@@ -454,7 +378,7 @@ const FS=`
 precision mediump float;
 uniform float uMode, uGloss, uUseTint;
 uniform vec4 uMCell, uECell, uPL, uEInj; uniform vec2 uEInj2; uniform vec3 uEyeDC; uniform vec2 uPR; uniform sampler2D uETex; uniform float uEOn; uniform sampler2D uMTex; uniform float uMOn, uMSz;
-uniform vec3 uCam, uTint, uInk, uMouthC; uniform vec4 uShd; uniform vec2 uShdR; uniform vec4 uHurt, uHurt2, uHurt3, uBB; uniform vec2 uRed, uInjSt; uniform vec4 uBru[6]; uniform float uOutfit; uniform vec4 uSB[9]; uniform vec4 uMk[6]; uniform vec2 uBurst, uTear; uniform vec4 uCut[4]; uniform vec3 uSkinC; uniform vec2 uTie;
+uniform vec3 uCam, uTint, uInk, uMouthC; uniform vec4 uHurt, uHurt2, uHurt3, uBB; uniform vec2 uRed, uInjSt; uniform vec4 uBru[6]; uniform float uOutfit; uniform vec4 uSB[9]; uniform vec4 uMk[6]; uniform vec2 uBurst, uTear; uniform vec4 uCut[4]; uniform vec3 uSkinC; uniform vec2 uTie;
 /* olhos grandes: o desenho dos olhos é ampliado (1.25x) e cada olho é afastado do meio (afastamento contínuo, sem emenda) */
 vec2 eyeSp(vec2 e){return vec2(sign(e.x)*max(abs(e.x)-.07,0.),e.y)/1.25;}   /* afasta cada olho sem esticar o desenho perto do meio */
 varying vec3 vW, vN, vL, vNL; varying vec4 vCol;
@@ -464,7 +388,6 @@ vec3 toon(vec3 base, vec3 N, vec3 V, float ao, float gloss){
   float lit=smoothstep(-.03,.03,nl), deep=smoothstep(-.6,-.54,nl);
   vec3 col=mix(base*vec3(.42,.4,.58),base*vec3(.66,.64,.8),deep);
   col=mix(col,base,lit);
-  /* brilho de vinil: mancha dura de luz */
   /* brilho de vinil: luz própria vinda do alto à esquerda, para a mancha não cair no meio do rosto */
   float sp=pow(max(dot(N,normalize(normalize(vec3(-.6,.75,.3))+V)),0.),90.);
   col+=vec3(1.)*smoothstep(.5,.56,sp)*gloss*.5;
@@ -492,22 +415,20 @@ void main(){
       c*=1.-.7*sh;
       c*=.55+.6*exp(-dot(p-vec2(0.,.6),p-vec2(0.,.6))/9.);                            /* luz da lâmpada */
     } else {
-      vec2 g=uMode<5.25?vW.xy:vec2(vW.z,vW.y);
+      vec2 g=vW.xy;
       vec2 b=g*vec2(2.,4.); b.x+=step(1.,mod(b.y,2.))*.5; vec2 f=fract(b), id=floor(b);
       float rn=fract(sin(dot(id,vec2(27.1,61.7)))*4375.5);
       vec3 brick=mix(vec3(.5,.24,.18),vec3(.62,.32,.22),rn)*(.9+.1*fract(rn*7.));
       float mortar=max(1.-smoothstep(.0,.06,f.y),1.-smoothstep(.0,.03,f.x));
       c=mix(brick,vec3(.26,.22,.2),mortar);
-      if(uMode<5.25){
-        /* cartazes de luta colados na parede */
-        vec2 q1=(g-vec2(-2.2,2.9))/vec2(.7,.95), q2=(g-vec2(2.3,2.7))/vec2(.65,.85);
-        float r1=step(max(abs(q1.x),abs(q1.y)),1.), r2=step(max(abs(q2.x),abs(q2.y)),1.);
-        vec3 p1=mix(vec3(.95,.82,.35),vec3(.8,.15,.15),step(.35,q1.y)); p1=mix(p1,vec3(.12),(1.-step(.25,abs(q1.y+.35)))*step(abs(q1.x),.8)*step(.5,fract(q1.x*6.)));
-        p1=mix(p1,vec3(.15),(1.-smoothstep(.0,.12,abs(length(q1-vec2(0.,-.05))-.3)))*.9);
-        vec3 p2=mix(vec3(.2,.35,.7),vec3(.95),step(.55,q2.y)); p2=mix(p2,vec3(.98,.85,.2),(1.-smoothstep(.3,.36,length(q2-vec2(0.,-.1)))));
-        c=mix(c,p1*(.92+.08*fract(q1.y*3.)),r1); c=mix(c,p2,r2);
-        c=mix(c,vec3(.1),max((1.-smoothstep(.0,.03,abs(max(abs(q1.x),abs(q1.y))-1.)))*step(max(abs(q1.x),abs(q1.y)),1.03),(1.-smoothstep(.0,.03,abs(max(abs(q2.x),abs(q2.y))-1.)))*step(max(abs(q2.x),abs(q2.y)),1.03))*.6);
-      }
+      /* cartazes de luta colados na parede */
+      vec2 q1=(g-vec2(-2.2,2.9))/vec2(.7,.95), q2=(g-vec2(2.3,2.7))/vec2(.65,.85);
+      float r1=step(max(abs(q1.x),abs(q1.y)),1.), r2=step(max(abs(q2.x),abs(q2.y)),1.);
+      vec3 p1=mix(vec3(.95,.82,.35),vec3(.8,.15,.15),step(.35,q1.y)); p1=mix(p1,vec3(.12),(1.-step(.25,abs(q1.y+.35)))*step(abs(q1.x),.8)*step(.5,fract(q1.x*6.)));
+      p1=mix(p1,vec3(.15),(1.-smoothstep(.0,.12,abs(length(q1-vec2(0.,-.05))-.3)))*.9);
+      vec3 p2=mix(vec3(.2,.35,.7),vec3(.95),step(.55,q2.y)); p2=mix(p2,vec3(.98,.85,.2),(1.-smoothstep(.3,.36,length(q2-vec2(0.,-.1)))));
+      c=mix(c,p1*(.92+.08*fract(q1.y*3.)),r1); c=mix(c,p2,r2);
+      c=mix(c,vec3(.1),max((1.-smoothstep(.0,.03,abs(max(abs(q1.x),abs(q1.y))-1.)))*step(max(abs(q1.x),abs(q1.y)),1.03),(1.-smoothstep(.0,.03,abs(max(abs(q2.x),abs(q2.y))-1.)))*step(max(abs(q2.x),abs(q2.y)),1.03))*.6);
       c*=.42+.7*exp(-(g.x*g.x)/10.-(g.y-3.3)*(g.y-3.3)/9.);                            /* cone de luz na parede */
       c*=mix(.6,1.,smoothstep(0.,1.2,g.y));
     }
@@ -602,7 +523,7 @@ void main(){
   if(uMode>1.5){
     vec3 hbase=base;   /* cor da pele da cabeça (para as pálpebras desenhadas) */
     /* ferimentos genéricos (pintados na pele, por baixo dos desenhos): olho roxo, bochecha vermelha, curativo */
-    {float fr=smoothstep(.15,.35,normalize(vNL).z); vec2 e=(vL-uEyeDC).xy, ee=eyeSp(e);
+    {float fr=smoothstep(.15,.35,normalize(vNL).z); vec2 e=(vL-uEyeDC).xy;
      /* hematomas onde apanhou: mancha roxa de borda irregular, com auréola amarelada (fica; força limitada) */
      for(int i=0;i<6;i++){vec4 b=uBru[i]; if(b.w<.01) continue; vec3 dv=vL-b.xyz; float dd=length(dv);
        float wob=.014*sin(atan(dv.y,dv.x)*3.+float(i)*2.1)+.008*sin(atan(dv.y,dv.x)*5.+float(i)*4.3);
@@ -742,7 +663,7 @@ try{
 }catch(e){console.error(e);note('Não foi possível preparar o 3D neste aparelho.');return;}
 gl.useProgram(prog);
 const U={};
-['uMk','uSB','uCut','uBurst','uTear','uOutfit','uSkinC','uTie','uBru','uShd','uShdR','uHurt','uHurt2','uHurt3','uBB','uRed','uInjSt','uM','uM2','uBend','uVP','uOutline','uAspect','uMode','uGloss','uUseTint','uPupil','uLidTilt','uSide','uAnger','uEye','uEye2','uBrow','uEyeC','uPup','uTime','uCam','uTint','uIris','uSkin','uInk','uMouthC','uGaze','uLid','uMouth','uTeeth','uMA','uMB','uMC','uMCell','uMTex','uMOn','uMSz','uECell','uEInj','uEInj2','uPL','uEyeDC','uPR','uETex','uEOn']
+['uMk','uSB','uCut','uBurst','uTear','uOutfit','uSkinC','uTie','uBru','uHurt','uHurt2','uHurt3','uBB','uRed','uInjSt','uM','uVP','uOutline','uAspect','uMode','uGloss','uUseTint','uCam','uTint','uInk','uMouthC','uMCell','uMTex','uMOn','uMSz','uECell','uEInj','uEInj2','uPL','uEyeDC','uPR','uETex','uEOn']
   .forEach(n=>U[n]=gl.getUniformLocation(prog,n));
 gl.enable(gl.DEPTH_TEST); gl.clearColor(0,0,0,0);
 /* cenário: dois retângulos (chão e parede do fundo) */
@@ -750,8 +671,7 @@ function quadMesh(P){
   const n=[0,1,0], pos=[], nor=[], col=[]; P.forEach(p=>{pos.push(...p); nor.push(...n); col.push(255,255,255,255);});
   return {bPos:buf(gl.ARRAY_BUFFER,new Float32Array(pos)),bNor:buf(gl.ARRAY_BUFFER,new Float32Array(nor)),bCol:buf(gl.ARRAY_BUFFER,new Uint8Array(col)),bIdx:buf(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array([0,1,2,0,2,3])),count:6};
 }
-const ENV={floor:quadMesh([[-12,0,-4.5],[12,0,-4.5],[12,0,9],[-12,0,9]]),wall:quadMesh([[-12,0,-4.5],[12,0,-4.5],[12,12,-4.5],[-12,12,-4.5]]),
-  wl:quadMesh([[-4.6,0,-4.5],[-4.6,0,9],[-4.6,12,9],[-4.6,12,-4.5]]),wr:quadMesh([[4.6,0,-4.5],[4.6,0,9],[4.6,12,9],[4.6,12,-4.5]])};   /* cela: paredes dos lados */
+const ENV={floor:quadMesh([[-12,0,-4.5],[12,0,-4.5],[12,0,9],[-12,0,9]]),wall:quadMesh([[-12,0,-4.5],[12,0,-4.5],[12,12,-4.5],[-12,12,-4.5]])};
 function buf(target,data,usage){const b=gl.createBuffer();gl.bindBuffer(target,b);gl.bufferData(target,data,usage||gl.STATIC_DRAW);return b;}
 function bindAttrs(m){
   [[m.bPos,3,gl.FLOAT,false],[m.bNor,3,gl.FLOAT,false],[m.bCol,4,gl.UNSIGNED_BYTE,true]].forEach((a,i)=>{
@@ -775,7 +695,6 @@ class Clay{
     this.col=src.col; this.bCol=buf(gl.ARRAY_BUFFER,src.col); this.bIdx=buf(gl.ELEMENT_ARRAY_BUFFER,src.idx);
     this.commit();
   }
-  free(){[this.bPos,this.bNor,this.bCol,this.bIdx].forEach(b=>gl.deleteBuffer(b));}
   /* troca a cor de todos os vértices (cor da pele nova); a sombra de canto (alfa) fica */
   recolor(fn){const c=this.col, p=this.p0; for(let i=0;i<this.nv;i++){const k=fn(p[i*3],p[i*3+1],p[i*3+2]); c[i*4]=clamp(k[0],0,1)*255; c[i*4+1]=clamp(k[1],0,1)*255; c[i*4+2]=clamp(k[2],0,1)*255;}
     gl.bindBuffer(gl.ARRAY_BUFFER,this.bCol); gl.bufferSubData(gl.ARRAY_BUFFER,0,c);}
@@ -852,33 +771,17 @@ class Clay{
 }
 const ballSrc=sphereMesh(22,14);
 const ball={bPos:buf(gl.ARRAY_BUFFER,ballSrc.pos),bNor:buf(gl.ARRAY_BUFFER,ballSrc.pos),bIdx:buf(gl.ELEMENT_ARRAY_BUFFER,ballSrc.idx),count:ballSrc.idx.length};
-/* formas facetadas pro nariz (normais chapadas): pirâmide, cone, cilindro e cubo — eixo +z pra fora da cara */
-const SHAPES=(()=>{
-  const mk=(tris,C)=>{const P=[],N=[],I=[];
-    const sb=(u,v)=>[u[0]-v[0],u[1]-v[1],u[2]-v[2]];
-    tris.forEach(([a,b,c])=>{let n=cross(sb(b,a),sb(c,a)); const m=[(a[0]+b[0]+c[0])/3-C[0],(a[1]+b[1]+c[1])/3-C[1],(a[2]+b[2]+c[2])/3-C[2]];
-      if(dot(n,m)<0){const t=b; b=c; c=t; n=[-n[0],-n[1],-n[2]];} n=norm3(n); [a,b,c].forEach(v=>{P.push(...v); N.push(...n); I.push(I.length);});});
-    return {bPos:buf(gl.ARRAY_BUFFER,new Float32Array(P)),bNor:buf(gl.ARRAY_BUFFER,new Float32Array(N)),bIdx:buf(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(I)),count:I.length};};
-  const ring=(n,z)=>[...Array(n)].map((_,i)=>[Math.cos(i/n*6.2832+Math.PI/n),Math.sin(i/n*6.2832+Math.PI/n),z]);
-  const cone=n=>{const r=ring(n,0), T=[]; for(let i=0;i<n;i++) T.push([r[i],r[(i+1)%n],[0,0,1]]); return mk(T,[0,0,.3]);};
-  const cyl=n=>{const a=ring(n,0), b=ring(n,1), T=[]; for(let i=0;i<n;i++){const j=(i+1)%n; T.push([a[i],a[j],b[j]],[a[i],b[j],b[i]],[b[i],b[j],[0,0,1]]);} return mk(T,[0,0,.5]);};
-  const cube=()=>{const T=[], v=(x,y,z)=>[x,y,z];
-    [[0,1,2],[1,2,0],[2,0,1]].forEach(([i,j,k])=>[-1,1].forEach(sg=>{const q=(u,w)=>{const p=[0,0,0]; p[i]=sg; p[j]=u; p[k]=w; return p;}; T.push([q(-1,-1),q(1,-1),q(1,1)],[q(-1,-1),q(1,1),q(-1,1)]);}));
-    return mk(T,[0,0,0]);};
-  return {p:cone(4),c:cone(9),y:cyl(14),x:cube()};
-})();
-/* monta (e guarda) as malhas de um personagem: corpo, cabeça e acessórios */
+/* monta (e guarda) as malhas de um personagem: corpo-bolinha, cabeça e acessórios */
 const BUILT={};
 function buildChar(C){
   if(BUILT[C.id]) return BUILT[C.id];
   const h=C.hc, t0=performance.now();
   const B={
-    body:BALLMODE?null:new Clay(meshSDF((x,y,z)=>C.sdBody(x,y,z),(x,y,z)=>C.colBody(x,y,z),[-.8,.4,-.7],[.8,1.6,.7],.04)),
     /* corpo-bolinha: ovo de vinil, mais largo embaixo, com uma costura no meio que mostra quando ele gira */
     ball:new Clay(meshSDF((x,y,z)=>{const u=clamp((BALL_C-y)/.5,-1,1); return gell(x,y-BALL_C,z,.5+.05*u,.47,.45+.04*u);},
       (x,y,z)=>Math.abs(y-BALL_C+.03)<.014&&z>-.2?[.8,.79,.78]:FABRIC.slice(),[-.64,BALL_C-.56,-.6],[.64,BALL_C+.56,.6],.042)),
     head:new Clay(meshSDF((x,y,z)=>C.sdHead(x,y,z),(x,y,z)=>C.colHead(x,y,z),[h[0]-1.45,NECK-.25,h[2]-1.25],[h[0]+1.45,h[1]+1.15,h[2]+1.3],.052)),   /* resolução da cabeça: os desenhos do rosto são por pixel, não precisa de malha tão densa */
-    acc:C.acc.map(a=>{const g=a.mesh?a.mesh():{mesh:meshSDF((x,y,z)=>a.sd(x,y,z),(x,y,z)=>a.col(x,y,z),a.b0,a.b1,a.h)};
+    acc:C.acc.map(a=>{const g=a.mesh();
       return {on:a.on,gloss:a.gloss,noOut:a.noOut,m:new Clay(g.mesh),hull:g.hull?new Clay(g.hull):null};})
   };
   B.ms=Math.round(performance.now()-t0);
@@ -890,7 +793,7 @@ function buildChar(C){
    Músculos puxam cada ponto para a pose desejada com uma força; golpes empurram pontos de verdade
    e o corpo todo reage junto. O equilíbrio decide quando ele dá passos e quando cai; para levantar,
    os músculos voltam a ganhar força e puxam o corpo por etapas (sentar, agachar, ficar em pé). */
-const SHOULDER=[.46,1.24,.02], GRAV=-16, SUB=2;
+const GRAV=-16, SUB=2;
 let VMAX=5.5;
 /* firmeza do corpo (0 = mole, 1 = duro); calibrada em .45 */
 const FIRM=.45;
@@ -902,7 +805,7 @@ function restPose(){
   const s=PROP.s, dL=PROP.dL, h=cur.hc;
   return [[0,.72,0],[0,1.0,0],[0,1.28,0],[0,NECK,0],[h[0]*s,NECK+(h[1]-NECK)*s,h[2]*s],
     [-.46,1.24,.02],[.46,1.24,.02],[-.6,1.02,.04],[.6,1.02,.04],[-.66,.8,.1],[.66,.8,.1],
-    [-.2,.7,0],[.2,.7,0],[-.21,.42-dL/2,.07],[.21,.42-dL/2,.07],[-.22,.14-dL,0],[.22,.14-dL,0]].map((p,i)=>i>=5&&i<=10?armXf(p,i%2?-1:1):p);
+    [-.2,.7,0],[.2,.7,0],[-.21,.42-dL/2,.07],[.21,.42-dL/2,.07],[-.22,.14-dL,0],[.22,.14-dL,0]];
 }
 /* raio de cada ponto contra o chão, peso (inverso da massa) e força base do músculo (por segundo) */
 const RAD=[.36,.3,.4,.15,1.12,.14,.14,.1,.1,.13,.13,.14,.14,.13,.13,.12,.12];
@@ -976,14 +879,13 @@ function getupPoses(){
   /* pernas mais longas: sentado, os pés vão mais para a frente; agachado, tudo um pouco mais alto */
   [13,14].forEach(i=>{SIT[i][2]+=dL*.45;}); [15,16].forEach(i=>{SIT[i][2]+=dL*.9;});
   CROUCH.forEach((p,i)=>{if(i<15) p[1]+=dL*(i>=13?.5:.55);});
-  [SIT,CROUCH].forEach(P=>{for(let i=5;i<=10;i++){const q=armXf(P[i],i%2?-1:1); P[i][0]=q[0]; P[i][1]=Math.max(.13,q[1]); P[i][2]=q[2];}});
   const STAND=R.map(p=>[p[0],p[1]+dL,p[2]+.32]);
   return {SIT,CROUCH,STAND};
 }
 /* braço: pose desejada (mão e cotovelo) no espaço do modelo */
 function armPose(a){
-  const P=armPose0(a); if(P.raw) return P; P.hand=armXf(P.hand,a.side); P.elbow=armXf(P.elbow,a.side);
-  if(FLOAT&&!a.stop) P.hand[0]+=a.side*.1;
+  const P=armPose0(a); if(P.raw) return P;
+  if(!a.stop) P.hand[0]+=a.side*.1;
   return P;
 }
 function armPose0(a){
@@ -1020,8 +922,7 @@ function armPose0(a){
   if(act&&act.k==='flip'&&(act.both||act.side===s)&&!S.down){const w=RM?0:Math.sin(S.t*7+s)*.02; a.flip=1; return {hand:[s*(act.both?.72:.6),1.14+w,.86],elbow:[s*.82,1.05,.3],k:1.5};}
   /* punho sacudindo: o tremelique é somado depois da suavização (senão ele some) */
   if(act&&act.k==='shake'&&(act.both||act.side===s)&&!S.down) return {hand:[s*(act.both?.7:.62),1.55,.5],elbow:[s*.82,1.3,.18],k:1.7,shake:1};
-  if(S.mood===2){const w=RM?0:Math.sin(S.t*9+s)*.03; hand=[s*.66,1.16+w,.42]; elbow=[s*.62,1.1,.18]; k=1.4; a.stop=1;}
-  else if(S.guard>0){hand=[s*.6,1.2,.42]; elbow=[s*.6,1.12,.18]; k=1.6; a.stop=1;}
+  if(S.guard>0){hand=[s*.6,1.2,.42]; elbow=[s*.6,1.12,.18]; k=1.6; a.stop=1;}
   else if(act){
     if(act.k==='hip'&&(act.both||act.side===s)){hand=[s*.5,.9,.14]; elbow=[s*.86,1.06,-.04]; k=1.3;}
     else if(act.k==='cross'){hand=[-s*.2,1.1+(s>0?.04:0),.45]; elbow=[s*.38,1.0,.36]; k=1.3;}
@@ -1057,7 +958,7 @@ function solve(h,T,KS,pinned){
     for(let b=0;b<BONES.length;b++){
       const [i,j,st]=BONES[b], A=X[i], B=X[j], dx=B[0]-A[0], dy=B[1]-A[1], dz=B[2]-A[2], l=Math.hypot(dx,dy,dz)||1e-6;
       /* braços invisíveis (mãos flutuantes): a mão segue o ombro, mas não puxa o ombro — senão o tronco e a cabeça giram junto quando ele leva a mão ao rosto */
-      const wi=pinned[i]||(FLOAT&&(i===J.shL||i===J.shR)&&(j===J.elL||j===J.elR))?0:INVM[i], wj=pinned[j]?0:INVM[j], ws=wi+wj; if(!ws) continue;
+      const wi=pinned[i]||((i===J.shL||i===J.shR)&&(j===J.elL||j===J.elR))?0:INVM[i], wj=pinned[j]?0:INVM[j], ws=wi+wj; if(!ws) continue;
       const df=(l-LEN[b])/l*st/ws;
       A[0]+=dx*df*wi; A[1]+=dy*df*wi; A[2]+=dz*df*wi; B[0]-=dx*df*wj; B[1]-=dy*df*wj; B[2]-=dz*df*wj;
     }
@@ -1067,7 +968,7 @@ function solve(h,T,KS,pinned){
       if(p[1]<RAD[i]){p[1]=RAD[i]; const q=Q[i], fr=S.hitT>0?.06:.35; q[0]=mix(q[0],p[0],fr); q[2]=mix(q[2],p[2],fr); if(q[1]<p[1]&&!(S.hitT>0)) q[1]=mix(q[1],p[1],.5);}
     }
     for(const i of [J.elL,J.elR,J.haL,J.haR,J.knL,J.knR]){
-      for(const [c,r] of [[J.bel,.47*PW()],[J.che,.45*PW()],[J.hea,RAD[J.hea]*.97]]){
+      for(const [c,r] of [[J.bel,.47],[J.che,.45],[J.hea,RAD[J.hea]*.97]]){
         if(i>=J.knL&&c===J.hea) continue;
         const p=X[i], o=X[c], dx=p[0]-o[0], dy=p[1]-o[1], dz=p[2]-o[2], l=Math.hypot(dx,dy,dz), rr=r+RAD[i]*.6;
         if(l<rr&&l>1e-5){const k=(rr-l)/l; p[0]+=dx*k; p[1]+=dy*k; p[2]+=dz*k;}
@@ -1102,10 +1003,6 @@ function tiltM(p,t,yaw){
   if(yaw) R=M4.mul(R,M4.RY(yaw));
   return M4.chain(M4.T(p[0],p[1],p[2]),R,M4.T(-p[0],-p[1],-p[2]));
 }
-function com(){
-  const w=[[J.pel,1],[J.bel,1],[J.che,1],[J.hea,1.6]]; let s=0, x=0, z=0, y=0;
-  w.forEach(([i,k])=>{x+=X[i][0]*k; y+=X[i][1]*k; z+=X[i][2]*k; s+=k;}); return [x/s,y/s,z/s];
-}
 /* equilíbrio: o corpo é um pêndulo invertido apoiado nos pés. O músculo do equilíbrio puxa de volta,
    mas com força limitada (SAT): passou do ponto, a gravidade ganha e ele cai. Inclinado, ele anda o apoio
    para baixo do corpo (passos de recuperação). */
@@ -1124,7 +1021,7 @@ function balanceHit(hw,push,power){
 function stepFeet(dt){
   const base=M4.mul(M4.T(S.root[0],0,S.root[1]),M4.RY(S.yaw)), st=S.stance, hurry=Math.hypot(S.lean[0],S.lean[1])>.08;
   S.feet.forEach((f,i)=>{
-    const j=f.s<0?0:1, want=M4.pt(base,[f.s*(.22+st.fx[j]+(FLOAT?.1:0)),0,st.fz[j]]), yawW=S.yaw+f.s*-st.fyaw[j]*(j?-1:1)*(FLOAT?.3:1);
+    const j=f.s<0?0:1, want=M4.pt(base,[f.s*(.22+st.fx[j]+.1),0,st.fz[j]]), yawW=S.yaw+f.s*-st.fyaw[j]*(j?-1:1)*.3;
     if(f.t<1){
       f.t=Math.min(1,f.t+dt/f.dur); const u=sstep(0,1,f.t);
       f.p=[mix(f.from[0],f.to[0],u),Math.sin(f.t*Math.PI)*.16,mix(f.from[2],f.to[2],u)]; f.yaw=mix(f.yawFrom,f.yawTo,u);
@@ -1136,7 +1033,7 @@ function stepFeet(dt){
     if(S.act&&S.act.k==='tap'&&S.act.side===f.s){f.p[1]=Math.max(0,Math.sin(S.t*11))*.07; return;}
     f.p[1]=0;
     /* o pé mais longe do lugar certo pisa primeiro */
-    const far=Math.hypot(want[0]-f.p[0],want[2]-f.p[2]), farO=(()=>{const jo=1-j, w=M4.pt(base,[other.s*(.22+st.fx[jo]+(FLOAT?.1:0)),0,st.fz[jo]]); return Math.hypot(w[0]-other.p[0],w[2]-other.p[2]);})();
+    const far=Math.hypot(want[0]-f.p[0],want[2]-f.p[2]), farO=(()=>{const jo=1-j, w=M4.pt(base,[other.s*(.22+st.fx[jo]+.1),0,st.fz[jo]]); return Math.hypot(w[0]-other.p[0],w[2]-other.p[2]);})();
     if((far>(hurry?.09:.13)&&far>=farO-.02)||Math.abs(yawW-f.yaw)>.5){
       /* passo de recuperação vai um pouco além, para segurar o corpo */
       const ov=hurry?1.25:1, to=[f.p[0]+(want[0]-f.p[0])*ov,0,f.p[2]+(want[2]-f.p[2])*ov];
@@ -1262,7 +1159,7 @@ function physics(dt){
       if(D.t>=tS+tR){
         const p=M4.pt(G0,[0,0,.32]); S.root=[clamp(p[0],-1.1,1.1),clamp(p[2],-.8,.5)]; S.rg=null; S.rst=null; S.yaw=D.yaw; S.yawPrev=S.yaw; S.yawV=0; S.lean=[0,0]; S.leanV=[0,0]; S.tw=0; S.twV=0;
         S.feet.forEach((f,i)=>{f.yaw=S.yaw; f.t=1; f.planted=true;});
-        if(!D.soft){S.hurt=S.hurt||{bl:0,br:0,cl:0,cr:0,galo:0,band:0,bbi:0}; S.hurt.band=1;}   /* levantou do nocaute: curativo na testa */
+        if(!D.soft){S.hurt=S.hurt||{bl:0,br:0,cl:0,cr:0,band:0,bbi:0}; S.hurt.band=1;}   /* levantou do nocaute: curativo na testa */
         S.down=null; S.calm=.6; S.guard=0; say(lineFrom(cur.lines.up)); S.turnBack=true;   /* levantou: vira de volta pra você */
         if(Math.random()<.65) S.flipIn=.35;   /* levantou: muitas vezes mostra o dedo pra você */
       }
@@ -1275,7 +1172,7 @@ function physics(dt){
       /* sentado (acordado): as mãos têm ação — esfregam onde apanhou, apoiam no chão e, se você dá um tempo, ele sacode o punho xingando */
       if(D.soft&&D.bounces){
         const quiet=S.t-(S.lastHitT||-9);
-        if(quiet>.9&&D.shake==null&&D.ph!=='getup'){D.shake=Math.random()<.5?-1:1; D.shakeT=0; say(lineFrom(cur.lines.xinga||cur.lines.mad),false);}
+        if(quiet>.9&&D.shake==null&&D.ph!=='getup'){D.shake=Math.random()<.5?-1:1; say(lineFrom(cur.lines.xinga),false);}
         if(quiet<.3) D.shake=null;
         S.arms.forEach((a,k)=>{
           const s=a.side, hnd=k?J.haR:J.haL, e=k?J.elR:J.elL, sh=X[k?J.shR:J.shL], pq=S.prot&&S.prot[s]&&S.prot[s].delay<=0?S.prot[s]:null;
@@ -1332,13 +1229,6 @@ function physics(dt){
   if(S.hyKick){S.hyKick*=Math.exp(-dt*2.2); if(Math.abs(S.hyKick)<.01) S.hyKick=0;}
   S.hyV=S.hyV||[0]; const hyA=[S.hy]; cdamp(hyA,S.hyV,[hyT+(S.hyKick||0)],S.hyKick?14:7,dt); S.hy=hyA[0];   /* golpe de lado: o rosto vira pro outro lado e volta devagar */
   frames3();
-  /* sombra: debaixo do corpo, esticada quando ele está deitado */
-  const lay=1-clamp((X[J.hea][1]-RAD[J.hea])/1.2,0,1), mid=wScreen([(X[J.pel][0]+X[J.hea][0]*lay)/(1+lay),0,(X[J.pel][2]+X[J.hea][2]*lay)/(1+lay)]);
-  /* a sombra fica no chão debaixo dele: quando ele recua ou avança, ela vai junto (e encolhe com a distância) */
-  const dep=wScreen([X[J.pel][0]+1,0,X[J.pel][2]])[0]-wScreen([X[J.pel][0],0,X[J.pel][2]])[0], d0=wScreen([1,0,0])[0]-wScreen([0,0,0])[0], ds=d0?dep/d0:1;
-  {const ax=[X[J.hea][0]-X[J.pel][0],X[J.hea][2]-X[J.pel][2]], al=Math.hypot(ax[0],ax[1])||1, cx=(X[J.pel][0]+X[J.hea][0]*lay)/(1+lay), cz=(X[J.pel][2]+X[J.hea][2]*lay)/(1+lay);
-   S.shd=[cx,cz,ax[0]/al,ax[1]/al,.75+lay*1.1,.6];}
-  if(0) $('shadow').style.transform='translate3d('+(mid[0]-W/2).toFixed(1)+'px,'+(mid[1]-H*.022).toFixed(1)+'px,0) scale('+((1+lay*1.6)*ds).toFixed(3)+','+ds.toFixed(3)+')';
   if(dt>0) updCam(dt);
 }
 function spinAll(dy){
@@ -1382,16 +1272,16 @@ function provoke(k){
   S.act={k:k,t:t,t0:t,side:Math.random()<.5?-1:1,both:both};
   S.dipV=(S.dipV||0)+.9; S.sqV=(S.sqV||0)+.6;
   if(k==='flip') say(both?pick(['Toma dobrado!','Os dois pra você!','Toma, toma!']):lineFrom(cur.lines.flip),false);
-  else if(k==='shake'){say(lineFrom(cur.lines.xinga||cur.lines.shake),false); S.act.yell=t*.5;}   /* sacudindo o punho: xinga, e xinga de novo no meio */
+  else if(k==='shake'){say(lineFrom(cur.lines.xinga),false); S.act.yell=t*.5;}   /* sacudindo o punho: xinga, e xinga de novo no meio */
   else if(k==='cross') say(pick(['Hmpf.','Tô de mal.','Não falo mais contigo.']),false);
 }
 function idleActs(dt){
   S.calm+=dt; if(S.down||S.nut||S.zap>0) return;
-  if(S.act){S.act.t-=dt; if(S.act.yell!=null&&S.act.t<S.act.yell){S.act.yell=null; say(lineFrom(cur.lines.xinga||cur.lines.shake),false);} if(S.act.t<=0||S.calm<.5){if(S.act.k==='step'||S.act.k==='shift') newStance(); S.act=null;} return;}
+  if(S.act){S.act.t-=dt; if(S.act.yell!=null&&S.act.t<S.act.yell){S.act.yell=null; say(lineFrom(cur.lines.xinga),false);} if(S.act.t<=0||S.calm<.5){if(S.act.k==='step'||S.act.k==='shift') newStance(); S.act=null;} return;}
   /* vingança: logo depois de apanhar, às vezes ele devolve com o dedo do meio */
-  if(S.flipIn!=null){S.flipIn-=dt; if(S.flipIn<-3) S.flipIn=null; else if(S.flipIn<=0&&S.calm>=.5&&!S.act){S.flipIn=null; if(S.mood<2&&!S.sadLvl){provoke('flip'); return;}}}
+  if(S.flipIn!=null){S.flipIn-=dt; if(S.flipIn<-3) S.flipIn=null; else if(S.flipIn<=0&&S.calm>=.5&&!S.act){S.flipIn=null; if(!S.sadLvl){provoke('flip'); return;}}}
   const mad=S.mood===1;
-  if(S.calm<(mad?.6:2.2)||S.mood===2||S.sadLvl) return;
+  if(S.calm<(mad?.6:2.2)||S.sadLvl) return;
   S.nextAct-=dt; if(S.nextAct>0) return;
   S.nextAct=mad?rnd(.5,1.4):rnd(1.2,3);
   /* bravo, ele provoca: dedo do meio, sacode o punho, bate o pé, cruza os braços emburrado */
@@ -1406,59 +1296,10 @@ function idleActs(dt){
   if(k==='thumbs') say(pick(['Beleza.','Tô suave.','Tudo certo.']),false);
 }
 
-const TS=26, TR=12;
-const tubeIdx=(function(){
-  const I=[], c0=(TS+2)*TR, c1=c0+1, e0=TS*TR, e1=e0+TR;
-  for(let j=0;j<TS-1;j++)for(let i=0;i<TR;i++){const a=j*TR+i, b=j*TR+(i+1)%TR; I.push(a,b,a+TR,b,b+TR,a+TR);}
-  for(let i=0;i<TR;i++){I.push(c0,e0+i,e0+(i+1)%TR); I.push(c1,e1+(i+1)%TR,e1+i);}
-  return new Uint16Array(I);
-})();
-function newTube(){
-  const nv=(TS+2)*TR+2, T={pos:new Float32Array(nv*3),nor:new Float32Array(nv*3),col:new Uint8Array(nv*4),count:tubeIdx.length};
-  T.bPos=buf(gl.ARRAY_BUFFER,T.pos,gl.DYNAMIC_DRAW); T.bNor=buf(gl.ARRAY_BUFFER,T.nor,gl.DYNAMIC_DRAW);
-  T.bCol=buf(gl.ARRAY_BUFFER,T.col,gl.DYNAMIC_DRAW); T.bIdx=buf(gl.ELEMENT_ARRAY_BUFFER,tubeIdx); return T;
-}
-function catmull(P,g){
-  const n=P.length-1, k=Math.min(Math.floor(g),n-1), f=g-k, p0=P[Math.max(0,k-1)], p1=P[k], p2=P[k+1], p3=P[Math.min(n,k+2)], f2=f*f, f3=f2*f;
-  return [0,1,2].map(c=>.5*(2*p1[c]+(-p0[c]+p2[c])*f+(2*p0[c]-5*p1[c]+4*p2[c]-p3[c])*f2+(-p0[c]+3*p1[c]-3*p2[c]+p3[c])*f3));
-}
-/* atualiza o tubo de um braço: raio afina do ombro ao pulso; cor de manga, pele e munhequeira conforme a ficha */
-const armProfile=A=>u=>{
-  const sleeve=A.sleeve&&u<A.sleeveTo;
-  return [sleeve?.14-.02*u:.105-.025*u, sleeve?A.sleeve:(A.band&&u>.78&&u<.9?A.band:A.skin)];
-};
-/* perna de sanfona: anéis que alternam largura e tom; comprimida, os anéis se juntam sozinhos */
-const legProfile=L=>u=>{const k=u*Math.round(6*(.56+PROP.dL)/.56), ridge=.5+.5*Math.cos(k*6.2832); return [.14+.04*ridge*ridge, Math.floor(k+.5)%2?L.b:L.a];};
-function bezier(a,b,c,d,t){const s=1-t; return [0,1,2].map(i=>s*s*s*a[i]+3*s*s*t*b[i]+3*s*t*t*c[i]+t*t*t*d[i]);}
-function fillTube(T,C,prof){
-  let nrm=null; const rings=[];
-  const put=(v,p,q,c)=>{T.pos.set(p,v*3); T.nor.set(q,v*3); T.col[v*4]=c[0]*255; T.col[v*4+1]=c[1]*255; T.col[v*4+2]=c[2]*255; T.col[v*4+3]=255;};
-  for(let s=0;s<TS;s++){
-    const a=C[Math.max(0,s-1)], b=C[Math.min(TS-1,s+1)], tan=norm3([b[0]-a[0],b[1]-a[1],b[2]-a[2]]);
-    if(!nrm) nrm=norm3(cross(tan,Math.abs(tan[2])<.9?[0,0,1]:[1,0,0]));
-    const dd=dot(nrm,tan); nrm=norm3([nrm[0]-tan[0]*dd,nrm[1]-tan[1]*dd,nrm[2]-tan[2]*dd]);
-    const bi=cross(tan,nrm), pr=prof(s/(TS-1)), r=pr[0], c=pr[1], ring=[];
-    for(let i=0;i<TR;i++){
-      const g=i/TR*6.2832, o=[nrm[0]*Math.cos(g)+bi[0]*Math.sin(g),nrm[1]*Math.cos(g)+bi[1]*Math.sin(g),nrm[2]*Math.cos(g)+bi[2]*Math.sin(g)];
-      const p=[C[s][0]+o[0]*r,C[s][1]+o[1]*r,C[s][2]+o[2]*r]; put(s*TR+i,p,o,c); ring.push(p);
-    }
-    rings.push({t:tan,c:c,r:ring});
-  }
-  [[0,TS*TR,-1],[TS-1,(TS+1)*TR,1]].forEach(([s,base,sg],e)=>{
-    const R=rings[s], q=[R.t[0]*sg,R.t[1]*sg,R.t[2]*sg];
-    for(let i=0;i<TR;i++) put(base+i,R.r[i],q,R.c); put((TS+2)*TR+e,C[s],q,R.c);
-  });
-  gl.bindBuffer(gl.ARRAY_BUFFER,T.bPos); gl.bufferSubData(gl.ARRAY_BUFFER,0,T.pos);
-  gl.bindBuffer(gl.ARRAY_BUFFER,T.bNor); gl.bufferSubData(gl.ARRAY_BUFFER,0,T.nor);
-  gl.bindBuffer(gl.ARRAY_BUFFER,T.bCol); gl.bufferSubData(gl.ARRAY_BUFFER,0,T.col);
-  return {end:C[TS-1],tan:rings[TS-1].t};
-}
-
-
 /* corpo-bolinha: centro da bola no espaço do modelo */
-const BALL_C=.92, BALLMODE=true;
+const BALL_C=.92;
 const FABRIC=[.97,.96,.94];   /* lona branca da roupa de hospício */
-/* roupas: 0 camisa de força, 1 camisola de paciente, 2 terno de vendedor */
+/* roupas: 1 camisola de paciente, 2 terno de vendedor */
 const OUTFITS=[['Terno',2],['Camisola',1]];   /* [nome, id no shader] */
 let OUTFIT=2; try{const o=+localStorage.getItem('joao_roupa'); if(o===1||o===2) OUTFIT=o;}catch(e){}
 function outfitFeet(){const C=CHARS[0];
@@ -1483,47 +1324,17 @@ function handPoseName(a){
   if(S.mood===1) return 'fist';
   return 'relax';
 }
-/* ---------- 8. estado, física e rosto ---------- */
+/* ---------- 8. estado e rosto ---------- */
 let ci=0, cur=CHARS[0], parts=null, saved={};
 try{saved=JSON.parse(localStorage.getItem('jb3')||'{}')||{}; const k=CHARS.findIndex(c=>c.id===saved.char); if(k>=0){ci=k;cur=CHARS[k];}}catch(e){}
 const S={t:0,yaw:0,yawV:0,root:[0,0],lean:[0,0],leanV:[0,0],tw:0,twV:0,dip:0,dipV:0,hk:[0,0,0],hkV:[0,0,0],ouch:0,guard:0,annoy:0,calm:0,act:null,nextAct:1.5,hy:0,combo:0,kd:0,down:null,feet:[{s:-1,t:1},{s:1,t:1}],mood:0,blink:0,nextBlink:2,sayT:0,lastLine:'',muted:!!saved.muted,tool:'cutucao',
   ptr:{x:0,y:0,on:false},arms:[{side:-1},{side:1}]};
 newStance();
-/* olhos desenhados: expressões (unidades da cabeça) */
-const EYEX={
-  calm:{es:1,la:.42,lb:0,lw:0,ps:1,pr:0,py:0,by:.43,bs:0,bt:.07,bc:.03,md:0},
-  irr:{es:1,la:.11,lb:-.21,lw:.07,ps:.86,pr:.2,py:-.02,by:.31,bs:-.31,bt:.082,bc:0,md:0},
-  brv:{es:1,la:.055,lb:-.47,lw:.095,ps:.72,pr:.45,py:-.06,by:.21,bs:-.43,bt:.108,bc:0,md:0},
-  fur:{es:1.06,la:.045,lb:-.58,lw:.125,ps:.4,pr:1,py:-.08,by:.23,bs:-.5,bt:.135,bc:0,md:0},
-  happy:{es:1,la:.42,lb:0,lw:0,ps:1,pr:0,py:0,by:.37,bs:0,bt:.07,bc:.06,md:1},
-  scared:{es:1.2,la:.5,lb:0,lw:0,ps:.42,pr:1,py:0,by:.56,bs:.3,bt:.07,bc:.03,md:0},
-  ouch:{es:1,la:.42,lb:0,lw:0,ps:1,pr:0,py:0,by:.35,bs:.26,bt:.075,bc:0,md:2},
-  dizzy:{es:1,la:.42,lb:0,lw:0,ps:1,pr:0,py:0,by:.38,bs:0,bt:.065,bc:-.02,md:3},
-  ko:{es:1,la:.42,lb:0,lw:0,ps:1,pr:0,py:0,by:.36,bs:.1,bt:.07,bc:0,md:4},
-  effort:{es:1,la:.03,lb:-.16,lw:.085,ps:.7,pr:.3,py:-.02,by:.27,bs:-.3,bt:.085,bc:0,md:0}
-};
-EYEX.sad=Object.assign({},EYEX.calm,{by:.4,bs:.3}); EYEX.cry=Object.assign({},EYEX.calm,{by:.4,bs:.35});
-const eye=Object.assign({},EYEX.calm);
-/* bocão: w meia largura, o abertura, fu/fl quanto abre para cima/baixo, s curva (+ sorriso), k inclinação, wv ondulação,
-   t1/t2 dentes de cima/baixo, tg língua, cl dentes cerrados */
-const MOUTHX={
-  calm:{w:.36,o:0,fu:.5,fl:.5,s:.55,k:0,wv:0,t1:0,t2:0,tg:0,cl:0},
-  irr:{w:.3,o:0,fu:.5,fl:.5,s:-.4,k:-.03,wv:0,t1:0,t2:0,tg:0,cl:0},
-  brv:{w:.38,o:.13,fu:.5,fl:.5,s:-.2,k:0,wv:0,t1:1,t2:1,tg:0,cl:1},
-  fur:{w:.42,o:.28,fu:.55,fl:.85,s:-.32,k:0,wv:0,t1:.08,t2:.07,tg:1,cl:0},
-  happy:{w:.42,o:.24,fu:.1,fl:1.2,s:.45,k:0,wv:0,t1:.08,t2:0,tg:1,cl:0},
-  scared:{w:.2,o:.18,fu:1,fl:1,s:0,k:0,wv:0,t1:.06,t2:0,tg:1,cl:0},
-  ouch:{w:.4,o:.15,fu:.6,fl:.85,s:-.1,k:-.14,wv:0,t1:.065,t2:0,tg:0,cl:0},
-  dizzy:{w:.3,o:0,fu:.5,fl:.5,s:.3,k:-.08,wv:0,t1:0,t2:0,tg:0,cl:0,to:1},
-  ko:{w:.26,o:0,fu:.5,fl:.5,s:-.15,k:0,wv:1,t1:0,t2:0,tg:0,cl:0},
-  effort:{w:.36,o:.11,fu:.5,fl:.5,s:-.2,k:0,wv:0,t1:1,t2:1,tg:0,cl:1}
-};
-MOUTHX.sad=Object.assign({},MOUTHX.irr); MOUTHX.cry=Object.assign({},MOUTHX.ouch);
-const mouth=Object.assign({to:0},MOUTHX.calm);
-const face={anger:0,lidU:.5,lidL:-.8,pupil:.4,browA:0,browY:0,open:0,smileL:0,smileR:0,w:1,browTilt:0,gx:0,gy:0};
+/* para onde as pupilas olham (segue o dedo) */
+const face={gx:0,gy:0};
 function save(){try{localStorage.setItem('jb3',JSON.stringify({char:cur.id,muted:S.muted}));}catch(e){}}
 /* humor: a irritação sobe com cada golpe e baixa sozinha; escolhe a expressão de base */
-function moodOf(a){return a<1?0:1;}   /* pavio curtíssimo: apanhou, fica bravo (e quanto mais apanha, mais bravo) */
+function moodOf(a){return a<1?0:1;}   /* 0 = calmo, 1 = bravo. Pavio curtíssimo: apanhou, fica bravo (e quanto mais apanha, mais bravo) */
 function steam(){
   const c=cur.hc, q=toScreen(HEADM,[c[0]+rnd(-.4,.4),c[1]+cur.headR*.95,c[2]]);
   part(el('circle',{r:rnd(6,11),fill:'#F4F2FA',stroke:'#1F1B2E','stroke-width':2.5}),{x:q[0],y:q[1],vx:rnd(-25,25),vy:-rnd(70,120),g:-20,max:.8,s0:.6,s1:1.4});
@@ -1585,7 +1396,7 @@ function markHead(p,t,inEye){
     if(g) g.r=Math.min(LUMP_R*(g.hair?1.25:1),g.r+t.power*.012);}
 }
 function hurtHit(h,t){
-  const H=S.hurt=S.hurt||{bl:0,br:0,cl:0,cr:0,galo:0,band:0,bbi:0}, p=h.p;
+  const H=S.hurt=S.hurt||{bl:0,br:0,cl:0,cr:0,band:0,bbi:0}, p=h.p;
   if(h.part==='head'){
     const hc=cur.hc, ey=hc[1]+cur.eye.y, side=p[0]<hc[0]?'l':'r', front=p[2]>hc[2]+.3;
     const inEye=front&&Math.abs(Math.abs(p[0]-hc[0])-.432)<.375&&Math.abs(p[1]-ey)<.4;   /* área dos olhos grandes */
@@ -1645,12 +1456,12 @@ function addStain(x,y,z,wall,r){
   while(BLOOD.stains.length>70) BLOOD.stains.shift();
 }
 function bloodStep(dt){
-  const D=BLOOD.drops, bodyOn=parts&&D.length, iv=bodyOn?M4.inv(BALLMODE?ballM():M4.mul(MODEL,bodyS())):null, BM=bodyOn?(BALLMODE?parts.ball:parts.body):null;
-  /* dentro do corpo? (barriga-bola: elipsoide; corpo comum: a forma de verdade) */
-  const inBody=q=>BALLMODE?Math.hypot(q[0]/.52,(q[1]-BALL_C)/.49,q[2]/.48)<1.03:cur.sdBody(q[0],q[1],q[2])<.02;
+  const D=BLOOD.drops, bodyOn=parts&&D.length, iv=bodyOn?M4.inv(ballM()):null, BM=bodyOn?parts.ball:null;
+  /* dentro do corpo? (barriga-bola: elipsoide) */
+  const inBody=q=>Math.hypot(q[0]/.52,(q[1]-BALL_C)/.49,q[2]/.48)<1.03;
   for(let i=D.length-1;i>=0;i--){const b=D[i]; b.v[1]-=9.8*dt; b.v[0]*=1-dt*.4; b.v[2]*=1-dt*.4;
     b.p[0]+=b.v[0]*dt; b.p[1]+=b.v[1]*dt; b.p[2]+=b.v[2]*dt;
-    if(bodyOn){const q=M4.pt(iv,b.p); if(inBody(q)){const R=b.r*rnd(4,5.5), run=rnd(.08,.2); for(let k=0;k<4;k++) BM.paint([q[0],q[1]-run*k/3,q[2]+(BALLMODE?.02*k:0)],R*(1-.2*k),[.7,.06,.13]);   /* mancha + escorrido pra baixo */ D.splice(i,1); continue;}}   /* bateu no corpo: suja ele */
+    if(bodyOn){const q=M4.pt(iv,b.p); if(inBody(q)){const R=b.r*rnd(4,5.5), run=rnd(.08,.2); for(let k=0;k<4;k++) BM.paint([q[0],q[1]-run*k/3,q[2]+.02*k],R*(1-.2*k),[.7,.06,.13]);   /* mancha + escorrido pra baixo */ D.splice(i,1); continue;}}   /* bateu no corpo: suja ele */
     if(b.p[1]<=0){addStain(b.p[0],0,b.p[2],false,b.r*rnd(5.5,8)); D.splice(i,1);}
     else if(b.p[2]<=-4.48){addStain(b.p[0],b.p[1],-4.5,true,b.r*rnd(3.5,5)); D.splice(i,1);}
     else if(Math.abs(b.p[0])>12||b.p[2]>9) D.splice(i,1);}
@@ -1662,10 +1473,10 @@ function bloodDraw(L){
     /* gota esticada na direção em que voa */
     const y=norm3(b.v), x=norm3(Math.abs(y[1])<.95?cross(y,[0,1,0]):cross(y,[1,0,0])), z=cross(x,y);
     const M=new Float32Array([x[0]*b.r,x[1]*b.r,x[2]*b.r,0, y[0]*b.r*st,y[1]*b.r*st,y[2]*b.r*st,0, z[0]*b.r,z[1]*b.r,z[2]*b.r,0, b.p[0],b.p[1],b.p[2],1]);
-    L.push([ball,M,0,.8,[.78,.05,.14],null,null,.55]);}
+    L.push([ball,M,0,.8,[.78,.05,.14],.55]);}
   for(const s of BLOOD.stains){const t=Math.min(1,s.age/30), c=[mix(.68,.32,t),mix(.04,.02,t),mix(.11,.06,t)], r=s.r*Math.max(0,s.fade);
     const M=s.wall?M4.chain(M4.T(s.x,s.y,-4.48),M4.RX(Math.PI/2),M4.RY(s.rot),M4.S(r,1,r*s.sq)):M4.chain(M4.T(s.x,.018+BLOOD.stains.indexOf(s)*2e-4,s.z),M4.RY(s.rot),M4.S(r,1,r*s.sq));
-    L.push([SPLATS[s.k],M,0,mix(.7,.3,t),c,null,null,null,1]);}
+    L.push([SPLATS[s.k],M,0,mix(.7,.3,t),c,null,1]);}
 }
 /* pingo que escorre pelo queixo e cai reto: sai de baixo do queixo e suja o peito/barriga */
 function bloodDrip(n,bd){
@@ -1690,7 +1501,7 @@ function updateFace(dt){
       const w=M4.pt(HEADM,[c.p[0],c.p[1]-.55,c.p[2]+.03]); BLOOD.drops.push({p:w,v:[rnd(-.1,.1),-.2,rnd(0,.15)],r:rnd(.013,.02)});}}}}
   if(S.hurt){const H=S.hurt; for(const sd of ['l','r']){if(!H['x'+sd]) continue; H['t'+sd]=Math.min(1,(H['t'+sd]||0)+dt*.05);   /* escorre devagar (~20 s até o queixo) */
     if(H['t'+sd]>=1){H['dt'+sd]=(H['dt'+sd]||0)-dt; if(H['dt'+sd]<=0&&!S.down){H['dt'+sd]=rnd(1.2,2.6); bloodDrip(1,sd==='l'?-4.3:4.3);}}}}
-  if(S.voiceHi>0) S.voiceHi-=dt; if(S.nutCover>0) S.nutCover-=dt;
+  if(S.nutCover>0) S.nutCover-=dt;
   /* no saco: cai de joelhos e, um instante depois, de cara no chão; quando levanta, volta furioso */
   if(S.nut){S.nut.t-=dt;
     if(S.nut.t<=2.0&&!S.down){const fw=M4.dir(M4.RY(S.yaw+S.tw),[0,0,1]); S.lean=[fw[0]*.3,fw[2]*.3]; S.leanV=[fw[0]*1.4,fw[2]*1.4];
@@ -1700,15 +1511,10 @@ function updateFace(dt){
 
   if(S.handPain){S.handPain.t-=dt; if(S.handPain.t<=0) S.handPain=null;}
   if(S.hurt){const H=S.hurt; H.lip=Math.max(0,(H.lip||0)-dt*.01); H.nose=Math.max(0,(H.nose||0)-dt*.02); if(H.broke>0){H.broke=Math.max(0,H.broke-dt*.011); H.nb=Math.max(.35*Math.min(1,H.broke*3),(H.nb||0)-dt*.03); H.nd=Math.min(1,(H.nd||0)+dt*.3); if(H.broke<=0){H.nb=0; H.nd=0;}
-    if(H.nd>.85&&!S.down){H.ndT=(H.ndT||0)-dt; if(H.ndT<=0){H.ndT=rnd(.45,1.1); chinDrop((H.bend||1)*Math.min(1,H.broke*4));}}}   /* escorreu até o queixo: pinga */ if(H.lip>.45){H.drip=Math.min(1,(H.drip||0)+dt*.25);} else H.drip=Math.max(0,(H.drip||0)-dt*.5);  if(S.t-(S.handHitT||-9)>3){H.hl=Math.max(0,(H.hl||0)-dt*.012); H.hr=Math.max(0,(H.hr||0)-dt*.012);}   /* sem apanhar na mão: volta ao normal aos poucos */  H.rl=Math.max(0,(H.rl||0)-dt*.025); H.rr=Math.max(0,(H.rr||0)-dt*.025); H.cl=Math.max(0,H.cl-dt*.12); H.cr=Math.max(0,H.cr-dt*.12); H.galo=Math.max(0,H.galo-dt*.012); H.band=Math.max(0,H.band-dt*.025); }
+    if(H.nd>.85&&!S.down){H.ndT=(H.ndT||0)-dt; if(H.ndT<=0){H.ndT=rnd(.45,1.1); chinDrop((H.bend||1)*Math.min(1,H.broke*4));}}}   /* escorreu até o queixo: pinga */ if(H.lip>.45){H.drip=Math.min(1,(H.drip||0)+dt*.25);} else H.drip=Math.max(0,(H.drip||0)-dt*.5);  if(S.t-(S.handHitT||-9)>3){H.hl=Math.max(0,(H.hl||0)-dt*.012); H.hr=Math.max(0,(H.hr||0)-dt*.012);}   /* sem apanhar na mão: volta ao normal aos poucos */  H.rl=Math.max(0,(H.rl||0)-dt*.025); H.rr=Math.max(0,(H.rr||0)-dt*.025); H.cl=Math.max(0,H.cl-dt*.12); H.cr=Math.max(0,H.cr-dt*.12); H.band=Math.max(0,H.band-dt*.025); }
   /* (fumacinha da cabeça desligada) */
   S.annoy=clamp(S.annoy-dt*.22,0,14);
   const m=moodOf(S.annoy); if(m!==S.mood){S.mood=m; if(S.sayT<=0) idleLine();}
-  const F0=cur.face, tgt=Object.assign({},F0.calm,[null,F0.mad,F0.scared][S.mood]||{});
-  if(S.down){
-    const ph=S.down.ph;
-    Object.assign(tgt,ph==='fall'&&!S.down.bounces?F0.fall:ph==='getup'?F0.effort:S.down.dizzy?F0.dizzy:F0.floor);
-  }
   /* tristeza: cada pancada enche; sem apanhar por um tempo, vai passando. 1 = triste, 2 = chorando */
   /* choro é raro: só numa sequência SEM PARAR de ~25 golpes (pausa de mais de 1,3 s zera a conta).
      Lá pelos 15 ele começa a fazer beicinho (triste); passando de 25, abre o berreiro por alguns segundos */
@@ -1716,21 +1522,14 @@ function updateFace(dt){
    if(st>=25) S.cryUntil=Math.max(S.cryUntil||0,S.t+5);
    const sl=S.cryUntil&&S.cryUntil>S.t?2:st>=15?1:0, was=S.sadLvl||0;
    if(sl!==was){
-     if(sl===2) say(pick(cur.lines.cry||['Buáááá!']),false);
-     else if(sl===1&&was===0) say(pick(cur.lines.sad||['Snif…']),false);
+     if(sl===2) say(pick(cur.lines.cry),false);
+     else if(sl===1&&was===0) say(pick(cur.lines.sad),false);
      else if(sl===0&&was===2){say(pick(['Snif… agora cê vai ver!','Tá… mas eu vou me vingar!','Snif. Seu malvado!']),false); S.annoy=Math.max(S.annoy,7);}}   /* chorou, mas volta bravo */
    S.sadLvl=sl;}
   if(S.sadLvl===2&&(!S.down||S.down.soft)){S.tearT=(S.tearT||0)-dt; if(S.tearT<=0){S.tearT=rnd(.18,.4); tear();}}
   /* raiva em 3 níveis: irritado → bravo → furioso (triste, ele não fica bravo) */
   const lvl=S.down||S.mood!==1||S.sadLvl?0:S.annoy<3.2?1:S.annoy<6?2:3;
   S.angerLvl=lvl;
-  if(lvl){
-    const L3=[null,{anger:.5,browA:-.6,browY:-.05,lidU:.46,lidL:-.8,pupil:.3,open:.08,smileL:-.45,smileR:-.45,w:1},
-      {anger:.8,browA:-.85,browY:-.1,lidU:.3,lidL:-.7,pupil:.17,open:.2,smileL:-.75,smileR:-.75,w:1.18},
-      {anger:1,browA:-1,browY:-.13,lidU:.32,lidL:-.62,pupil:.06,open:.5,smileL:-.9,smileR:-.9,w:1.3}][lvl];
-    Object.assign(tgt,L3);
-  } else tgt.anger=0;
-  if(S.ouch>0&&!S.down) Object.assign(tgt,F0.ouch);
   /* qual expressão de olho */
   let ex='calm'; const D=S.down;
   if(D&&S.ouch>0&&D.ph!=='getup') ex='ouch';
@@ -1740,49 +1539,32 @@ function updateFace(dt){
   else if(S.zap>0) ex='dizzy';
   else if(S.ouch>0) ex='ouch';
   else if(S.sadLvl) ex=S.sadLvl===2?'cry':'sad';
-  else if(S.mood===2) ex='scared';
   else if(lvl) ex=['','irr','brv','fur'][lvl];
   else if(S.act&&(S.act.k==='wave')) ex='happy';
   /* olho cutucado (ou ainda vermelho): ninguém fica sorrindo — cara de incomodado no lugar da calma */
   if(S.eyePoke>0) S.eyePoke-=dt;
   const Hs=S.hurt||{}, sore=!D&&((S.eyePoke||0)>0||Math.max(Hs.rl||0,Hs.rr||0)>.35);
   if(sore&&(ex==='calm'||ex==='happy')) ex='irr';
-  const ET=Object.assign({},EYEX[ex]);
-  if(S.blink>0&&ET.md===0){ET.la=-.3; ET.lb=0; ET.lw=.075;}
-  const ke=Math.min(1,dt*(S.blink>0?40:14));
-  for(const key in ET) if(key!=='md') eye[key]+=(ET[key]-eye[key])*ke;
-  eye.md=ET.md;
   /* olho desenhado */
   let ek={calm:'calmo',irr:'irritado',brv:'bravo',fur:'furioso',happy:'feliz',scared:'assustado',ouch:'apanhando',dizzy:'zonzo',ko:'nocaute',effort:'esforco',sad:'triste',cry:'choro'}[ex]||'calmo';
   /* dedo do meio: se já está bravo, mantém a cara de bravo (sem troca brusca); calmo, faz deboche */
-  const flipSmug=!D&&S.act&&S.act.k==='flip'&&!lvl&&S.mood!==2&&!sore;
+  const flipSmug=!D&&S.act&&S.act.k==='flip'&&!lvl&&!sore;
   if(flipSmug) ek='deboche';
   if(S.smug>0){S.smug-=dt; if(!D&&!S.sadLvl&&!sore) ek='deboche';}
   if(S.blink>0&&EYE_PUP[ek]) ek='piscar';
   S.eyeK=ek;
-  /* boca desenhada: expressão → ilustração; falando alterna as bocas de fala; provocando mostra língua/deboche */
+  /* boca desenhada: expressão → ilustração; provocando mostra língua/deboche */
   let mk={calm:'calmo',irr:'irritado',brv:'bravo',fur:'furioso',happy:'feliz',scared:'assustado',ouch:'apanhando',dizzy:'zonzo',ko:'nocaute',effort:'bravo',sad:'triste',cry:'choro'}[ex]||'calmo';
   if(flipSmug) mk=S.act.side>0?'deboche':'lingua';
   if(S.smug>0&&!D&&!S.sadLvl&&!sore) mk='deboche';
   if(S.zap>0&&!D) mk='furioso';
   if(!D&&S.act&&S.act.k==='shake'&&!S.sadLvl){mk='furioso'; S.eyeK=ek=EYE_PUP.furioso?'furioso':ek;}   /* gritando: bocão aberto e olho de fúria */
-  if(S.talk>0&&!['bravo','apanhando','assustado','furioso','triste','choro'].includes(mk)){S.vt=(S.vt||0)-dt; if(S.vt<=0){S.vt=rnd(.07,.12); S.vis=pick(['falaA','falaE','falaO','falaM','falaA']);} mk=S.vis||'falaA';}
-  if(mk!==S.mouthK){S.mouthK=mk; S.mpv=(S.mpv||0)+(S.talk>0?1.2:3.2);}
+  if(mk!==S.mouthK){S.mouthK=mk; S.mpv=(S.mpv||0)+3.2;}
   S.mpv=(S.mpv||0)+(-320*(S.mp||0)-22*(S.mpv||0))*dt; S.mp=clamp((S.mp||0)+S.mpv*dt,-.15,.25);
-  const MT=Object.assign({to:0},MOUTHX[ex]);
-  /* falando: a boca abre e fecha nas sílabas */
-  if(S.talk>0&&!MT.cl){S.talk-=dt; const f=Math.max(0,Math.sin(S.t*22))*.11; MT.o=Math.max(MT.o,f); MT.t1=Math.max(MT.t1,f>.03?.06:0); MT.fu=Math.max(MT.fu,.35); MT.tg=1;}
-  for(const key in MT) mouth[key]+=(MT[key]-mouth[key])*Math.min(1,dt*18);
-  if(S.blink>0){tgt.lidU=-.6; tgt.lidL=-.1;}
-  tgt.browTilt=tgt.browTilt||0;
-  const k=Math.min(1,dt*16);
-  for(const key in tgt) if(key in face) face[key]+=(tgt[key]-face[key])*k;
-  face.anger+=((tgt.anger||0)-face.anger)*Math.min(1,dt*8);
   let gx=0, gy=0;
   if(S.ptr.on){const hp=M4.pt(VP,M4.pt(HEADM,cur.hc)); gx=clamp((S.ptr.x-hp[0])*.8,-.38,.38); gy=clamp((S.ptr.y-hp[1])*.8,-.3,.32);}
   else if(S.down&&S.down.dizzy&&S.down.ph==='ground'){gx=Math.cos(S.t*7)*.3; gy=Math.sin(S.t*7)*.25;}
   else if(S.sadLvl&&!S.down){gx=Math.sin(S.t*.7)*.08; gy=.3;}
-  else if(S.mood===2){gx=Math.sin(S.t*3.1)*.3; gy=Math.cos(S.t*2.3)*.12;}
   if(S.angerLvl===3&&!RM){gx+=rnd(-.05,.05); gy+=rnd(-.04,.04);}
   face.gx+=(gx-face.gx)*Math.min(1,dt*14); face.gy+=(gy-face.gy)*Math.min(1,dt*14);
   S.nextBlink-=dt; if(S.nextBlink<=0){S.blink=.12; S.nextBlink=rnd(2,5);} if(S.blink>0) S.blink-=dt;
@@ -1821,13 +1603,6 @@ function showVein(on){
    Os dentes são "vagas" fixas na largura da boca: perder um dente apaga aquela vaga em todas as bocas. ---------- */
 const MK={INK:'#1F1B2E',IN:'#26131F',TG:'#F29BAA'};
 const TEETH={up:new Set(),dn:new Set()};   /* dentes perdidos: vagas de 0 a 7, de 16 em 16 a partir de x=36 */
-function mTicks(l,r,dl,dr){
-  return '';   /* sem risquinhos nos cantos: o contorno da boca é contínuo */
-  dl=dl||1; dr=dr||1; let o='';
-  if(l){const[x,y]=l; o+=`<path d="M${x-2} ${y-8*dl} Q${x-6} ${y} ${x-1} ${y+8*dl}" fill="none" stroke="${MK.INK}" stroke-width="3.6" stroke-linecap="round"/>`;}
-  if(r){const[x,y]=r; o+=`<path d="M${x+2} ${y-8*dr} Q${x+6} ${y} ${x+1} ${y+8*dr}" fill="none" stroke="${MK.INK}" stroke-width="3.6" stroke-linecap="round"/>`;}
-  return o;
-}
 function mTeeth(cid,x0,x1,y,h,up,seps){
   const cx=(x0+x1)/2, miss=up?TEETH.up:TEETH.dn;
   let s=up?`<path d="M${x0-12} ${y-14} L${x1+12} ${y-14} L${x1+12} ${y+h*.9} Q${cx} ${y+h+7} ${x0-12} ${y+h*.9} Z" fill="#FFFFFF"/>`
@@ -1867,44 +1642,37 @@ function mOpen(cid,d,inner,lip){
 }
 const mCres=d=>`<path d="${d}" fill="${MK.INK}"/>`;
 const mTongueOut=(p,l)=>`<path d="${p}" fill="${MK.TG}" stroke="${MK.INK}" stroke-width="3.4" stroke-linejoin="round"/><path d="${l}" stroke="${MK.INK}" stroke-width="2.6" stroke-linecap="round"/>`;
-const MOUTH_NAMES=['calmo','irritado','bravo','furioso','feliz','assustado','apanhando','zonzo','nocaute','deboche','lingua','falaA','falaE','falaO','falaM','triste','choro'];
+const MOUTH_NAMES=['calmo','irritado','bravo','furioso','feliz','assustado','apanhando','zonzo','nocaute','deboche','lingua','triste','choro'];
 function mouthSVG(k){
   let d;
   switch(k){
-    case 'calmo': return mCres('M52 60 Q100 102 148 60 Q100 88 52 60 Z')+mTicks([52,60],[148,60]);
-    case 'irritado': return mCres('M56 86 Q82 66 108 72 Q130 76 146 92 Q128 82 108 79 Q84 75 56 86 Z')+mTicks([56,86],[146,92],-1,-1);
+    case 'calmo': return mCres('M52 60 Q100 102 148 60 Q100 88 52 60 Z');
+    case 'irritado': return mCres('M56 86 Q82 66 108 72 Q130 76 146 92 Q128 82 108 79 Q84 75 56 86 Z');
     /* bravo/furioso: cantos da boca puxados pra baixo (formato de arco, nunca de sorriso) */
     case 'bravo': d='M38 100 Q46 58 100 56 Q154 58 162 100 Q142 86 100 88 Q58 86 38 100 Z';
       return mOpen('b',d,mGrit('b',38,162,56,100,70,2.2,14),3);
     case 'furioso': d='M32 110 Q36 48 100 46 Q164 48 168 110 Q150 96 100 98 Q50 96 32 110 Z';
       return mOpen('f',d,mGrit('f',32,168,46,110,68,3.4,18),3.5);
     case 'feliz': d='M34 42 Q100 66 166 42 Q152 124 100 126 Q48 124 34 42 Z';
-      return mOpen('h',d,mTeeth('h',36,164,54,18,true)+mTongue(100,114,38,21,'h'))+mTicks([34,42],[166,42]);
+      return mOpen('h',d,mTeeth('h',36,164,54,18,true)+mTongue(100,114,38,21,'h'));
     case 'assustado': d='M74 76 Q68 38 100 34 Q132 38 126 76 Q130 114 100 120 Q70 114 74 76 Z';
       return mOpen('s',d,mTeeth('s',72,128,36,13,true)+mTeeth('s',72,128,120,11,false)+mTongue(100,110,16,9,'s'));
     case 'apanhando': d='M48 84 Q66 40 122 44 Q160 48 152 72 Q148 102 104 100 Q58 104 48 84 Z';
-      return mOpen('a',d,mTeeth('a',48,156,44,18,true)+mTeeth('a',48,156,100,13,false))+mTicks([48,84],null);
-    case 'zonzo': return mCres('M50 62 Q76 84 100 74 Q124 64 150 82 Q124 76 100 84 Q74 94 50 62 Z')+mTongueOut('M100 80 Q92 124 112 126 Q130 124 122 74 Q110 84 100 80 Z','M111 86 L112 108')+mTicks([50,62],[150,82]);
+      return mOpen('a',d,mTeeth('a',48,156,44,18,true)+mTeeth('a',48,156,100,13,false));
+    case 'zonzo': return mCres('M50 62 Q76 84 100 74 Q124 64 150 82 Q124 76 100 84 Q74 94 50 62 Z')+mTongueOut('M100 80 Q92 124 112 126 Q130 124 122 74 Q110 84 100 80 Z','M111 86 L112 108');
     case 'nocaute': d='M60 74 Q100 58 140 80 Q124 104 98 100 Q68 98 60 74 Z';
       return mOpen('n',d,mTeeth('n',60,140,62,10,true))+mTongueOut('M66 84 Q50 116 70 120 Q88 120 84 92 Q74 92 66 84 Z','M73 94 L72 110');
     case 'deboche': d='M60 84 Q108 92 152 44 Q150 86 112 96 Q80 100 60 84 Z';
-      return mOpen('d',d,mTeeth('d',100,156,52,16,true))+mTicks(null,[152,44]);
+      return mOpen('d',d,mTeeth('d',100,156,52,16,true));
     case 'lingua': d='M60 54 Q100 44 140 54 Q138 84 100 86 Q62 84 60 54 Z';
-      return mOpen('l',d,mTeeth('l',60,140,50,13,true))+mTongueOut('M72 72 Q64 128 100 128 Q136 128 128 72 Q100 82 72 72 Z','M100 82 L100 112')+mTicks([60,54],[140,54]);
-    case 'falaA': d='M66 56 Q100 50 134 56 Q132 102 100 104 Q68 102 66 56 Z';
-      return mOpen('fa',d,mTeeth('fa',66,134,52,15,true)+mTongue(100,98,20,11,'fa'));
-    case 'falaE': d='M52 62 Q100 54 148 62 Q144 88 100 90 Q56 88 52 62 Z';
-      return mOpen('fe',d,mTeeth('fe',52,148,57,14,true)+mTeeth('fe',52,148,90,11,false));
-    case 'falaO': d='M84 70 Q84 50 100 50 Q116 50 116 70 Q116 92 100 92 Q84 92 84 70 Z';
-      return mOpen('fo',d,mTongue(100,88,10,7,'fo',false));
-    case 'triste': return mCres('M58 98 Q76 70 100 72 Q124 70 142 98 Q122 82 100 84 Q78 82 58 98 Z')+`<path d="M86 96 Q100 92 114 96" fill="none" stroke="${MK.INK}" stroke-width="3.4" stroke-linecap="round"/>`+mTicks([58,98],[142,98],-1,-1);
+      return mOpen('l',d,mTeeth('l',60,140,50,13,true))+mTongueOut('M72 72 Q64 128 100 128 Q136 128 128 72 Q100 82 72 72 Z','M100 82 L100 112');
+    case 'triste': return mCres('M58 98 Q76 70 100 72 Q124 70 142 98 Q122 82 100 84 Q78 82 58 98 Z')+`<path d="M86 96 Q100 92 114 96" fill="none" stroke="${MK.INK}" stroke-width="3.4" stroke-linecap="round"/>`;
     case 'choro': d='M40 100 Q46 46 100 44 Q154 46 160 100 Q130 88 100 90 Q70 88 40 100 Z';
-      return mOpen('c',d,mTeeth('c',40,160,44,15,true)+mTongue(100,96,30,13,'c'))+mTicks([40,100],[160,100],-1,-1);
-    case 'falaM': return mCres('M70 72 Q100 78 130 72 Q100 82 70 72 Z')+`<path d="M80 66 Q100 60 120 66" fill="none" stroke="${MK.INK}" stroke-width="3" stroke-linecap="round"/>`;
+      return mOpen('c',d,mTeeth('c',40,160,44,15,true)+mTongue(100,96,30,13,'c'));
   }
   return '';
 }
-/* atlas 1024×1024: 4 colunas × 4 linhas de células 256×256 (desenho 256×192 no topo de cada célula) */
+/* atlas 2048×1024: 8 colunas × 4 linhas de células 256×256 (desenho 240×180 no topo de cada célula) */
 let mouthTex=null, mouthReady=false, mouthVer=0;
 function buildMouths(){
   const ver=++mouthVer, cv2=document.createElement('canvas'); cv2.width=2048; cv2.height=1024;
@@ -1941,26 +1709,11 @@ function loseTooth(sx,sy){
 
 /* ---------- olhos desenhados (mesmo estilo das bocas): branco, contorno de nanquim, pálpebra, sobrancelha que afina.
    As pupilas NÃO estão no desenho: são pintadas por cima, só onde o olho é branco, e seguem o seu dedo. ---------- */
-const EK={INK:'#1F1B2E',SKIN:'#EDEBF5'};
+const EK={INK:'#1F1B2E'};
 const ePt=(s)=>100+s*33;   /* centro de cada olho no desenho (s=-1 esquerdo, +1 direito) */
 function eOval(c,cy,rx,ry){return `<ellipse cx="${c}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#FFFFFF"/>`;}
 function eLine(c,cy,rx,ry,w){return `<ellipse cx="${c}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="${EK.INK}" stroke-width="${w||4.5}"/>`;}
 function eBrow(x1,y1,x2,y2,cv,th){const mx=(x1+x2)/2, my=(y1+y2)/2; return `<path d="M${x1} ${y1} Q${mx} ${my-cv} ${x2} ${y2} Q${mx} ${my-cv+th*1.6} ${x1} ${y1} Z" fill="${EK.INK}" stroke="${EK.INK}" stroke-width="2" stroke-linejoin="round"/>`;}
-/* pálpebra de cima: corta o olho numa reta (yo no canto de fora, yi no canto de dentro) */
-function eLid(id,s,cy,rx,ry,yo,yi,low){
-  const c=ePt(s), xo=c+s*rx*1.4, xi=c-s*rx*1.4;
-  let p=`<path d="M${xo} ${cy-ry-10} L${xi} ${cy-ry-10} L${xi} ${yi} L${xo} ${yo} Z" fill="${EK.SKIN}"/>`;
-  let l=`<path d="M${xo} ${yo} L${xi} ${yi}" stroke="${EK.INK}" stroke-width="5" stroke-linecap="round"/>`;
-  if(low!=null){p+=`<path d="M${xo} ${cy+ry+10} L${xi} ${cy+ry+10} L${xi} ${low} L${xo} ${low} Z" fill="${EK.SKIN}"/>`; l+=`<path d="M${xo} ${low} L${xi} ${low}" stroke="${EK.INK}" stroke-width="3.5" stroke-linecap="round"/>`;}
-  return `<defs><clipPath id="${id}"><ellipse cx="${c}" cy="${cy}" rx="${rx}" ry="${ry}"/></clipPath></defs><g clip-path="url(#${id})">${p}${l}</g>`;
-}
-/* pálpebra de cima relaxada: curva (não reta), cobrindo o topo do olho — olho de gente, não arregalado */
-function eLidC(id,s,cy,rx,ry,yl,arch){
-  const c=ePt(s), x0=c-rx-4, x1=c+rx+4;
-  const p=`<path d="M${x0} ${cy-ry-10} L${x1} ${cy-ry-10} L${x1} ${yl+2} Q${c} ${yl-arch*2} ${x0} ${yl+2} Z" fill="${EK.SKIN}"/>`;
-  const l=`<path d="M${x0} ${yl+2} Q${c} ${yl-arch*2} ${x1} ${yl+2}" fill="none" stroke="${EK.INK}" stroke-width="5.5" stroke-linecap="round"/>`;
-  return `<defs><clipPath id="${id}"><ellipse cx="${c}" cy="${cy}" rx="${rx}" ry="${ry}"/></clipPath></defs><g clip-path="url(#${id})">${p}${l}</g>`;
-}
 /* olho "cortado": a pálpebra não é desenhada — o próprio formato do olho é cortado por ela.
    Só o pedaço visível do olho tem branco e contorno (sem a linha do olho continuando por cima da pálpebra) */
 function eCut(id,c,cy,rx,ry,region,edge,w,inner){
@@ -2072,8 +1825,7 @@ function hLayer(parts,o){
   return `<defs><filter id="${g}" filterUnits="userSpaceOnUse" x="-40" y="-40" width="200" height="220" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${blur}"/><feColorMatrix values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 24 -11"/></filter>`+
     `<mask id="${m}" maskUnits="userSpaceOnUse" x="-40" y="-40" width="200" height="220"><g filter="url(#${g})">${all('#FFFFFF',0)}</g></mask></defs>`+
     `<g filter="url(#${g})">${all(HK.INK,HO)}</g>`+
-    `<g mask="url(#${m})"><rect x="-40" y="-40" width="200" height="220" fill="${HK.SH}"/><g filter="url(#${g})" transform="translate(-3.6 -4.4)">${all(HK.SKIN,0)}</g>${o.inner||''}</g>`+
-    (o.over||'');
+    `<g mask="url(#${m})"><rect x="-40" y="-40" width="200" height="220" fill="${HK.SH}"/><g filter="url(#${g})" transform="translate(-3.6 -4.4)">${all(HK.SKIN,0)}</g>${o.inner||''}</g>`;
 }
 const hInk=(d,w)=>`<path d="${d}" fill="none" stroke="${HK.INK}" stroke-width="${w||4.2}" stroke-linecap="round" stroke-linejoin="round"/>`;
 const hShine=(cx,cy,rx,ry,a)=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" transform="rotate(${a||-30} ${cx} ${cy})" fill="#FFFFFF"/>`;
@@ -2188,7 +1940,6 @@ function spritePose(a){
   if(a.cover) return a.coverKind==='guard'?'aberta':'concha';
   const D=S.down;
   if(D&&D.ph==='fall'&&!D.bounces) return 'garra';
-  if(!D&&S.mood===2&&!a.stop) return 'garra';
   return {relax:'relax',para:'aberta',fist:'punho',point:'apontar',flip:'dedo',thumbs:'joinha'}[handPoseName(a)]||'relax';
 }
 function drawHandSprites(list,dt){
@@ -2197,7 +1948,6 @@ function drawHandSprites(list,dt){
   const HC=M4.pt(HEADM,cur.hc), BC=M4.pt(ballM(),[0,BALL_C,0]);
   list.forEach(h=>{
     const a=h.a, pose=spritePose(a), toC=norm3(sub3(CAM,h.p));
-    a.spPose=pose;
     let yy=h.y; if(a.cover&&a.coverKind==='guard') yy=[0,1,0];
     if(pose==='dedo') yy=norm3([yy[0]*.25,yy[1]*.25+.75,yy[2]*.25]);   /* dedo do meio sempre em pé, bem na cara */
     let ya=dot(yy,R), yb=dot(yy,Uc); const l=Math.hypot(ya,yb); if(l<.25){ya=0; yb=1;} else {ya/=l; yb/=l;}
@@ -2251,10 +2001,6 @@ function tear(){
   const s=Math.random()<.5?-1:1, c=cur.hc, q=toScreen(HEADM,[c[0]+s*.3,c[1]-.3,c[2]+cur.headR*.9]);
   part(el('path',{d:'M0,-9 C7,0 7,8 0,8 C-7,8 -7,0 0,-9Z',fill:'#7CC8FF',stroke:'#1F1B2E','stroke-width':2}),{x:q[0]+rnd(-4,4),y:q[1],vx:s*rnd(20,70),vy:-rnd(40,110),g:700,max:.9,s0:.8,s1:1});
 }
-function sweat(){
-  const q=toScreen(HEADM,[cur.hc[0]+.85,cur.hc[1]+.5,cur.hc[2]+.4]);
-  part(el('path',{d:'M0,-9 C7,0 7,8 0,8 C-7,8 -7,0 0,-9Z',fill:'#6EC6FF',stroke:'#1F1B2E','stroke-width':2}),{x:q[0],y:q[1],vx:rnd(10,40),vy:-30,g:500,max:.8});
-}
 let ac=null;
 function audio(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'}); if(ac.state==='suspended') ac.resume();}catch(e){ac=null;} return ac;}
 function tone(t,f0,f1,dur,vol,type){
@@ -2282,15 +2028,6 @@ const SFX={
   coin:t=>{tone(t,1320,1320,.05,.07,'square');tone(t+.05,1760,1760,.08,.07,'square');}
 };
 function sfx(k){if(S.muted||!audio()) return; try{SFX[k](ac.currentTime);}catch(e){}}
-/* voz de bichinho: um bipe por sílaba, na altura de cada personagem */
-function voice(text){
-  if(S.muted||!audio()) return;
-  const syl=Math.min(12,Math.max(2,(text.match(/[aeiouáéíóúãõâêô]+/gi)||[]).length)), t0=ac.currentTime+.02, base=230*cur.pitch*(S.voiceHi>0?1.9:1);   /* voz fininha depois de levar no saco */
-  for(let i=0;i<syl;i++){
-    const t=t0+i*.075, f=base*rnd(.85,1.25)*(text.endsWith('?')&&i===syl-1?1.35:1)*(text.endsWith('!')?1.1:1);
-    try{tone(t,f,f*rnd(.8,1.1),.055,.06,cur.voice);}catch(e){}
-  }
-}
 function haptic(ms){try{if(navigator.vibrate&&!S.muted) navigator.vibrate(ms);}catch(e){}}
 /* balões duram: cada fala fica pelo menos ~2 s na tela. Falas de golpe comuns (prio baixa) esperam a vez;
    falas de acontecimento (prio: segundo argumento false — caiu, chorou, dente, dedo...) podem trocar depois de 0,8 s */
@@ -2302,12 +2039,11 @@ function say(s,silent){
     if(prio===1&&shown<2.2) return;
     if(prio===2&&shown<.7){S.sayQ=s; return;}   /* acontecimento importante espera um instante e entra em seguida */
   }
-  bubble.textContent=s; S.lastLine=s; S.sayT=SAY_T; S.sayPrio=prio;
+  bubble.textContent=s; S.lastLine=s; S.sayT=SAY_T;
   bubble.classList.remove('pop'); void bubble.offsetWidth; bubble.classList.add('pop');
-
 }
 function lineFrom(list){let s; do{s=pick(list);}while(list.length>1&&s===S.lastLine); return s;}
-function idleLine(){say(lineFrom(cur.lines[['idle','mad','scared'][S.mood]]),true);}
+function idleLine(){say(lineFrom(cur.lines[['idle','mad'][S.mood]]),true);}
 
 /* ---------- 10. ferramentas e toque ---------- */
 const ICON={
@@ -2348,29 +2084,25 @@ function stagePt(cx,cy){const b=cv.getBoundingClientRect(); return [cx-b.left,cy
 /* clique: raio no espaço de cada malha; ganha o acerto mais próximo da câmera */
 function pickAt(cx,cy){
   const o=stagePt(cx,cy), nx=o[0]/W*2-1, ny=1-o[1]/H*2, res={o:o,miss:true};
-  [['body',BALLMODE?ballM():M4.mul(MODEL,bodyS())],['head',HEADM]].forEach(([k,M])=>{
+  [['body',ballM()],['head',HEADM]].forEach(([k,M])=>{
     const iv=M4.inv(M4.mul(VP,M)), a=M4.pt(iv,[nx,ny,-1]), z=M4.pt(iv,[nx,ny,1]), d=norm3([z[0]-a[0],z[1]-a[1],z[2]-a[2]]);
-    const meshes=[k==='body'&&BALLMODE?parts.ball:parts[k]].concat(parts.acc.filter(x=>x.on===k).map(x=>x.m));
+    const meshes=[k==='body'?parts.ball:parts[k]].concat(parts.acc.filter(x=>x.on===k).map(x=>x.m));
     meshes.forEach(m=>{const r=m.ray(a,d); if(!r) return; const w=M4.pt(M,r.p), c=dist3(w,CAM);
       if(res.miss||c<res.c){Object.assign(res,{miss:false,c:c,part:k,p:r.p,n:r.n,push:norm3(M4.dir(M,[-r.n[0],-r.n[1],-r.n[2]]))});}});
   });
   return res;
 }
-/* braço tocado? distância na tela até os segmentos ombro → cotovelo → mão */
-function handHurt(side,v){S.hurt=S.hurt||{bl:0,br:0,cl:0,cr:0,galo:0,band:0,bbi:0}; const k=side<0?'hl':'hr', v0=S.hurt[k]||0; S.hurt[k]=Math.min(2,v0+v*(v0>=1?.5:1)); S.handHitT=S.t;}
+function handHurt(side,v){S.hurt=S.hurt||{bl:0,br:0,cl:0,cr:0,band:0,bbi:0}; const k=side<0?'hl':'hr', v0=S.hurt[k]||0; S.hurt[k]=Math.min(2,v0+v*(v0>=1?.5:1)); S.handHitT=S.t;}
+/* mão tocada? acerta onde a figurinha da mão está desenhada (o quadro na tela, um pouco encolhido pela margem vazia) — inclusive o dedo do meio em pé.
+   Mão da frente tem prioridade */
 function armAt(o){
-  const sd=(p,a,b)=>{const dx=b[0]-a[0], dy=b[1]-a[1], t=clamp(((p[0]-a[0])*dx+(p[1]-a[1])*dy)/(dx*dx+dy*dy||1),0,1); return Math.hypot(p[0]-a[0]-dx*t,p[1]-a[1]-dy*t);};
   if(!REST) return null;
-  if(FLOAT){
-    /* acerta onde a figurinha da mão está desenhada (o quadro na tela, um pouco encolhido pela margem vazia) — inclusive o dedo do meio em pé.
-       Mão da frente tem prioridade */
-    const inQ=(a)=>{const Q=a.spScr; if(!Q) return false; const c=Q.c, k=.86;
-      const P=Q.q.map(p=>[c[0]+(p[0]-c[0])*k,c[1]+(p[1]-c[1])*k]); let sg=0;
-      for(let j=0;j<4;j++){const A=P[j],B=P[(j+1)%4], cr=(B[0]-A[0])*(o[1]-A[1])-(B[1]-A[1])*(o[0]-A[0]); if(cr===0) continue; if(!sg) sg=Math.sign(cr); else if(Math.sign(cr)!==sg) return false;} return true;};
-    const order=[0,1].sort((x,y)=>(S.arms[y].spFront?1:0)-(S.arms[x].spFront?1:0));
-    for(const k of order) if(inQ(S.arms[k])) return S.arms[k];
-    for(let k=0;k<2;k++){const q=wScreen(X[k?J.haR:J.haL]); if(Math.hypot(o[0]-q[0],o[1]-q[1])<30) return S.arms[k];} return null;}
-  for(let k=0;k<2;k++){const sp=[k?J.shR:J.shL,k?J.elR:J.elL,k?J.haR:J.haL].map(i=>wScreen(X[i])); for(let j=1;j<3;j++) if(sd(o,sp[j-1],sp[j])<(j===2?24:16)) return S.arms[k];}
+  const inQ=(a)=>{const Q=a.spScr; if(!Q) return false; const c=Q.c, k=.86;
+    const P=Q.q.map(p=>[c[0]+(p[0]-c[0])*k,c[1]+(p[1]-c[1])*k]); let sg=0;
+    for(let j=0;j<4;j++){const A=P[j],B=P[(j+1)%4], cr=(B[0]-A[0])*(o[1]-A[1])-(B[1]-A[1])*(o[0]-A[0]); if(cr===0) continue; if(!sg) sg=Math.sign(cr); else if(Math.sign(cr)!==sg) return false;} return true;};
+  const order=[0,1].sort((x,y)=>(S.arms[y].spFront?1:0)-(S.arms[x].spFront?1:0));
+  for(const k of order) if(inQ(S.arms[k])) return S.arms[k];
+  for(let k=0;k<2;k++){const q=wScreen(X[k?J.haR:J.haL]); if(Math.hypot(o[0]-q[0],o[1]-q[1])<30) return S.arms[k];}
   return null;
 }
 /* a mão aparece na hora protegendo (sem o caminho suave dos gestos): reflexo */
@@ -2387,7 +2119,7 @@ function nutHit(t,o){
   if((S.nutGuardT||0)>S.t){S.nutCover=1.4; snapHands(); handHurt(-1,t.power*.004); handHurt(1,t.power*.004); sfx('slap'); haptic(t.buzz); ono(o[0],o[1],'BLOQ!');
     say(pick(['Aprendi, ó!','De novo não!','Aqui tá protegido!','Rá! Duas vezes não!']),false); return;}
   earn(15,o);
-  S.nut={t:3.2}; S.nutGuardT=S.t+14; S.voiceHi=3.4; S.ouch=0; S.prot=null; S.parry=null; S.guardSpot=null; S.rub=null; S.handPain=null;
+  S.nut={t:3.2}; S.nutGuardT=S.t+14; S.ouch=0; S.prot=null; S.parry=null; S.guardSpot=null; S.rub=null; S.handPain=null;
   S.arms.forEach(a=>{a.cover=null; a.coverKind=null; a.stop=0; a.flip=0;});   /* larga tudo e leva as mãos lá embaixo */ S.sqV=(S.sqV||0)+t.power*1.2*F; S.dipV=-7;   /* pulinho com o impacto */
   snapHands(); impactFx(o,t.power); sfx(t.sfx); haptic(90); stars(o[0],o[1],3); ono(o[0],o[1],'CREC!');
   say(pick(['Aí... não...','Minha... família...','Isso é... covardia...','Uiiiiii...','Meus... filhos...','Na... joia... não...']),false);
@@ -2459,7 +2191,7 @@ function strike(cx,cy){
       if(Math.random()<.35) say(pick(['Ei!','Tira a mão!','Que foi?','Para de cutucar!','Nem doeu.']),false); return;}
     /* dói: no dedo do meio dói mais. A mão machuca bem mais devagar que o rosto (vermelha -> roxa) e sara bem devagar */
     const flip=!!(S.act&&S.act.k==='flip'&&(S.act.both||S.act.side===arm.side)), hk=arm.side<0?'hl':'hr';
-    S.hurt=S.hurt||{bl:0,br:0,cl:0,cr:0,galo:0,band:0,bbi:0}; {const v0=S.hurt[hk]||0; S.hurt[hk]=Math.min(2,v0+t.power*(flip?.03:.016)*(v0>=1?.5:1));}   /* passou do limite: segundo estágio, bem mais devagar */ S.handHitT=S.t;
+    S.hurt=S.hurt||{bl:0,br:0,cl:0,cr:0,band:0,bbi:0}; {const v0=S.hurt[hk]||0; S.hurt[hk]=Math.min(2,v0+t.power*(flip?.03:.016)*(v0>=1?.5:1));}   /* passou do limite: segundo estágio, bem mais devagar */ S.handHitT=S.t;
     S.handPain={side:arm.side,t:flip?1.6:1.1,t0:flip?1.6:1.1};
     S.calm=0; S.act=null; S.ouch=t.ouch*(flip?1.4:1.1); S.annoy+=t.annoy*(flip?1.1:.7); sfx(t.sfx); haptic(t.buzz+(flip?20:0)); ono(o[0],o[1],flip?pick(['CREC!','TÉC!','PLOC!']):pick(t.ono)); stars(o[0],o[1],flip?3:2);
     say(flip?pick(['AI, MEU DEDO!','Meu dedinho!','Ai ai ai, o dedo!','Quebrou meu dedo!','Uiii, o dedo não!','Tá doido? Meu dedo!']):(S.hurt[hk]>.5?pick(['Minha mão tá roxa!','Para, minha mão!','Ai, tá latejando!']):pick(['Ai, minha mão!','Na mão não!','Ai, os dedos!','Uii!'])),false); return;
@@ -2467,8 +2199,8 @@ function strike(cx,cy){
   const h=pickAt(cx,cy);
   if(h.miss){S.streak=Math.max(0,S.streak-1); sfx('boing'); ono(o[0],o[1],'VUPT'); return;}
   /* no saco: reação na hora (sem demora, como na vida real). Ele aprende: logo em seguida protege com as mãos */
-  if(h.part==='body'&&!S.down&&BALLMODE&&h.p[1]<BALL_C-.2&&h.p[2]>.1&&Math.abs(h.p[0])<.25){nutHit(t,o); return;}
-  const head=h.part==='head', hw=M4.pt(head?HEADM:BALLMODE?ballM():M4.mul(h.p[1]>1.05?CHESTM:MODEL,bodyS()),h.p);
+  if(h.part==='body'&&!S.down&&h.p[1]<BALL_C-.2&&h.p[2]>.1&&Math.abs(h.p[0])<.25){nutHit(t,o); return;}
+  const head=h.part==='head', hw=M4.pt(head?HEADM:ballM(),h.p);
   S.lastPush=norm3([h.push[0],0,h.push[2]]); S.lastPow=t.power;
   if(head&&t.power>=2&&h.n&&!S.down){const off=h.p[0]-cur.hc[0]; if(Math.abs(off)>.18) S.hyKick=clamp((S.hyKick||0)+(off<0?1:-1)*(t.id==='soco'?.42:.3),-.6,.6);}   /* o sangue voa pra onde o golpe empurra */
   S.calm=0; S.act=null; S.ouch=t.ouch; S.annoy+=t.annoy*(head?1.2:1); hurtHit(h,t);
@@ -2495,7 +2227,7 @@ function strike(cx,cy){
       const sd=o[0]<wScreen(X[J.che])[0]?(wScreen(X[J.haL])[0]<wScreen(X[J.haR])[0]?-1:1):(wScreen(X[J.haL])[0]<wScreen(X[J.haR])[0]?1:-1); S.prot=S.prot||{}; S.prot[sd]={part:h.part,p:h.p.slice(),t:1.1,delay:.06};}   /* sentado: o tronco e a cabeça balançam com o golpe, sem quicar pra cima */
     else{hitDown(hw,h.push,t.power); balanceHit(hw,h.push,t.power);}
     S.sqV=(S.sqV||0)+t.power*1.3*F; sfx('thud');
-    say(D.soft?lineFrom(cur.lines.xinga||cur.lines.ground):lineFrom(cur.lines.ground)); return;
+    say(D.soft?lineFrom(cur.lines.xinga):lineFrom(cur.lines.ground)); return;
   }
   /* sequência rápida de golpes cansa os músculos; ele cai quando o corpo sai de cima dos pés (ver physics) */
   S.combo=(S.combo||0)+t.power;
@@ -2505,14 +2237,14 @@ function strike(cx,cy){
     /* mão tapando a boca protege os dentes: soco ali não arranca dente */
     const mq=toScreen(HEADM,[hc0[0],my,hc0[2]+cur.headR*.95]), shield=S.arms.some(a=>{if(!a.cover) return false; const q=wScreen(X[a.side<0?J.haL:J.haR]); return Math.hypot(q[0]-mq[0],q[1]-mq[1])<75;});
     if(!shield&&Math.abs(hp[0]-hc0[0])<.5&&hp[1]>my-.35&&hp[1]<my+.3&&hp[2]>hc0[2]+.4&&t.power>=3&&Math.random()<.6){
-      if(loseTooth(o[0],o[1])){S.hurt=S.hurt||{bl:0,br:0,cl:0,cr:0,galo:0,band:0,bbi:0}; S.hurt.lip=Math.min(1,(S.hurt.lip||0)+.2); if(S.hurt.lip>.45) bloodDrops(4); say(pick(['Meu dente!','Ai, meu dentinho!','Cê vai pagar o dentista!','Banguela, não!']),false);}}}
+      if(loseTooth(o[0],o[1])){S.hurt=S.hurt||{bl:0,br:0,cl:0,cr:0,band:0,bbi:0}; S.hurt.lip=Math.min(1,(S.hurt.lip||0)+.2); if(S.hurt.lip>.45) bloodDrops(4); say(pick(['Meu dente!','Ai, meu dentinho!','Cê vai pagar o dentista!','Banguela, não!']),false);}}}
   if(head) S.guard=.8;
   {/* proteção: a mão do lado do golpe vai até lá; se você insiste no mesmo lugar, ele deixa a mão de guarda */
     const side=o[0]<wScreen(X[J.che])[0]?(wScreen(X[J.haL])[0]<wScreen(X[J.haR])[0]?-1:1):(wScreen(X[J.haL])[0]<wScreen(X[J.haR])[0]?1:-1);
     S.hitLog=(S.hitLog||[]).filter(x=>S.t-x.t<4); S.hitLog.push({t:S.t,part:h.part,p:h.p.slice()});
     const near=S.hitLog.filter(x=>x.part===h.part&&dist3(x.p,h.p)<.55).length;
     const P=S.prot=S.prot||{}, cov=k=>P[k]&&P[k].t>0?P[k]:null;
-    if(near>=3&&!S.guardSpot&&S.mood<2){S.guardSpot={part:h.part,p:h.p.slice(),side:side,hp:7,t:5}; P[side]=null; S.hitLog=[]; setTimeout(()=>{if(!S.down) say(pick(['Aqui não!','Já entendi, ó.','Tá protegido!']),false);},350);}
+    if(near>=3&&!S.guardSpot){S.guardSpot={part:h.part,p:h.p.slice(),side:side,hp:7,t:5}; P[side]=null; S.hitLog=[]; setTimeout(()=>{if(!S.down) say(pick(['Aqui não!','Já entendi, ó.','Tá protegido!']),false);},350);}
     else if(head){
       /* rosto: a mão do lado do golpe vai lá (se a outra está na barriga, ela fica lá) */
       if(Math.random()<.8){const k=S.guardSpot&&S.guardSpot.side===side?-side:side; P[k]={part:'head',p:h.p.slice(),t:1.3,delay:.12}; const o2=cov(-k); if(o2) o2.t=Math.max(o2.t,.9);}
@@ -2527,9 +2259,8 @@ function strike(cx,cy){
       if(onFace) cov(onFace).t=Math.max(cov(onFace).t,.9);
     }}
   if(moodOf(S.annoy)===1&&Math.random()<.55) S.flipIn=rnd(.6,1);
-  if(cur.id==='nervoso'&&Math.random()<.5) sweat();
   const m=moodOf(S.annoy);
-  say(m===1&&Math.random()<(S.angerLvl>=2?.7:.45)?lineFrom(cur.lines.xinga||cur.lines.mad):lineFrom(cur.lines.hit));
+  say(m===1&&Math.random()<(S.angerLvl>=2?.7:.45)?lineFrom(cur.lines.xinga):lineFrom(cur.lines.hit));
 }
 
 /* gestos: um dedo toca; arrastar fora do boneco ou com dois dedos gira */
@@ -2596,7 +2327,6 @@ function setChar(k){
     parts=buildChar(cur); $('loading').hidden=true;
     Object.assign(S,{annoy:0,mood:0,ouch:0,guard:0,act:null,calm:0,root:[0,0],rg:null,rst:null,lean:[0,0],leanV:[0,0],tw:0,twV:0,down:null,combo:0,kd:0,hy:0,yawV:0});
     REST=null; S.feet.forEach(f=>{f.t=1;});
-    Object.assign(face,cur.face.calm,{browTilt:cur.face.calm.browTilt||0});
     idleLine(); save();
   };
   if(BUILT[cur.id]) go(); else{$('loading').hidden=false; setTimeout(go,30);}
@@ -2608,7 +2338,7 @@ let dprMax=Math.min(window.devicePixelRatio||1,1.75), dprNow=dprMax, slowT=0, fr
 const showFps=/fps/.test(location.hash+location.search);
 let fpsEl=null; if(showFps){fpsEl=document.createElement('div'); fpsEl.className='fps'; stage.appendChild(fpsEl);}
 /* câmera: enquadra o boneco inteiro; quando ele cai, desliza para o lado e abre um pouco o quadro */
-const cam={x:0,z:0,gy:0}, floorEl=document.querySelector('.floor');
+const cam={x:0,z:0};
 function updCam(dt){
   const ok=!!REST, lay=ok?1-clamp((X[J.hea][1]-RAD[J.hea])/1.2,0,1):0;
   const bk=ok?clamp((X[J.pel][2]-X[J.hea][2])/1.6,0,1)*lay:0;
@@ -2621,10 +2351,6 @@ function updCam(dt){
   /* tremor do golpe: curto e que morre rápido */
   if(S.shakeA>.002&&!RM){const a=S.shakeA, sx=(Math.random()-.5)*a, sy=(Math.random()-.5)*a; CAM[0]+=sx; CAM[1]+=sy; camT[0]+=sx*.6; camT[1]+=sy*.6; S.shakeA*=Math.exp(-(dt||0)*18);} else S.shakeA=0;
   VP=M4.mul(M4.persp(fov,asp,1,40),M4.look(CAM,camT,[0,1,0]));
-  /* chão e sombra acompanham a câmera */
-  const fl=Math.round(Math.max(0,H-wScreen([0,0,-1.2])[1])), gy=Math.round(wScreen([0,0,0])[1]-H*.022);
-  if(fl!==cam.fl){cam.fl=fl; floorEl.style.transform='translateY('+(H-fl)+'px)';}
-  cam.gy=gy;
 }
 function resize(){
   W=stage.clientWidth; H=stage.clientHeight; if(!W||!H) return;
@@ -2634,9 +2360,9 @@ function resize(){
 }
 if(window.ResizeObserver) new ResizeObserver(resize).observe(stage); else window.addEventListener('resize',resize);
 resize();
-function drawMesh(m,M,mode,gloss,tint,M2){
+function drawMesh(m,M,mode,gloss,tint){
   bindAttrs(m);
-  gl.uniformMatrix4fv(U.uM,false,M); gl.uniformMatrix4fv(U.uM2,false,M2||M); gl.uniform1f(U.uBend,M2?1:0); gl.uniform1f(U.uMode,mode); gl.uniform1f(U.uGloss,gloss);
+  gl.uniformMatrix4fv(U.uM,false,M); gl.uniform1f(U.uMode,mode); gl.uniform1f(U.uGloss,gloss);
   if(tint){gl.uniform1f(U.uUseTint,1); gl.uniform3fv(U.uTint,tint);} else gl.uniform1f(U.uUseTint,0);
   gl.drawElements(gl.TRIANGLES,m.count,gl.UNSIGNED_SHORT,0);
 }
@@ -2660,39 +2386,35 @@ function frame(now){
   if(S.hitStop>0){S.hitStop-=dt; physics(0);} else {idleActs(dt); physics(dt);} syncTrack(); updateFace(dt); bloodStep(dt);   /* pausa de impacto: o mundo congela 2-3 quadros no soco forte */
 
   gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-  {const sh=S.shd||[0,0,1,0,.75,.6]; gl.uniformMatrix4fv(U.uVP,false,VP); gl.uniform4f(U.uShd,sh[0],sh[1],sh[2],sh[3]); gl.uniform2f(U.uShdR,sh[4],sh[5]); gl.uniform1f(U.uOutline,0);
+  {gl.uniformMatrix4fv(U.uVP,false,VP); gl.uniform1f(U.uOutline,0);
    gl.disable(gl.CULL_FACE); drawMesh(ENV.wall,M4.T(0,0,0),5,0); drawMesh(ENV.floor,M4.T(0,0,0),4,0);}
   gl.uniformMatrix4fv(U.uVP,false,VP); gl.uniform3fv(U.uCam,CAM); gl.uniform3fv(U.uInk,cur.ink);
-  const C=cur, hc=C.hc, E=C.eye, Bw=C.brow, HS=[];
-  /* lista do que desenhar: [malha, matriz, modo, brilho, tinta, extra] */
+  const C=cur, hc=C.hc, E=C.eye, HS=[];
+  /* lista do que desenhar: [malha, matriz, modo, brilho, tinta, espessura do contorno, sem contorno (1 = e desenha frente e verso; 2 = só sem contorno), só contorno] */
   const L=[];
-  const BS=bodyS(), MB=M4.mul(MODEL,BS), CB=M4.mul(CHESTM,BS);
-  if(BALLMODE) L.push([parts.ball,ballM(),1,.6]); else L.push([parts.body,MB,0,.55,null,null,CB]);
-  L.push([parts.head,HEADM,2,.5,null,'mouth']);
+  L.push([parts.ball,ballM(),1,.6]);
+  L.push([parts.head,HEADM,2,.5]);
   bloodDraw(L);
   /* cordas do ringue atrás dele (vermelha, branca, azul) e os postes dos cantos */
-  [[.62,[.85,.15,.18]],[1.12,[.95,.95,.95]],[1.62,[.18,.3,.75]]].forEach(([y,c])=>L.push([ball,M4.chain(M4.T(0,y,-2.75),M4.S(4.3,.05,.05)),0,.5,c,null,null,.6]));
-  for(const sx of [-1,1]){L.push([ball,M4.chain(M4.T(sx*4.3,.95,-2.75),M4.S(.11,1.05,.11)),0,.7,[.55,.56,.6],null,null,.7]);
-    L.push([ball,M4.chain(M4.T(sx*4.3,1.12,-2.62),M4.S(.16,.62,.1)),0,.4,sx<0?[.8,.15,.18]:[.18,.3,.75],null,null,.7]);}
+  [[.62,[.85,.15,.18]],[1.12,[.95,.95,.95]],[1.62,[.18,.3,.75]]].forEach(([y,c])=>L.push([ball,M4.chain(M4.T(0,y,-2.75),M4.S(4.3,.05,.05)),0,.5,c,.6]));
+  for(const sx of [-1,1]){L.push([ball,M4.chain(M4.T(sx*4.3,.95,-2.75),M4.S(.11,1.05,.11)),0,.7,[.55,.56,.6],.7]);
+    L.push([ball,M4.chain(M4.T(sx*4.3,1.12,-2.62),M4.S(.16,.62,.1)),0,.4,sx<0?[.8,.15,.18]:[.18,.3,.75],.7]);}
   /* nariz de batata: bolota 3D rosadinha no meio da cara (acompanha a cabeça e aparece de perfil) */
-  {const H=S.hurt||{}, nz=H.nose||0, bk=Math.min(1,(H.broke||0)*4), bd=(H.bend||1)*bk, nr=1;   /* nariz não muda de tamanho: só fica vermelho, e quebrado entorta */
+  {const H=S.hurt||{}, nz=H.nose||0, bk=Math.min(1,(H.broke||0)*4), bd=(H.bend||1)*bk;   /* nariz não muda de tamanho: só fica vermelho, e quebrado entorta */
    /* quebrado: torto pro lado (gira e escorrega) e arroxeado */
    const NB=M4.mul(HEADM,M4.chain(M4.T(hc[0]+bd*.09,hc[1]+NOSE_Y,hc[2]+.98),M4.RZ(bd*.6))), ncol=[cur.skin[0]-bk*.08,cur.skin[1]*.86-nz*.15-bk*.12,cur.skin[2]*.88-nz*.15+bk*.02];
-   for(const q of NOSES[NOSE_I][1]){const r=q.r||[0,0,0], dz=NOSE_I?.1:0, M=M4.mul(NB,M4.chain(M4.T(q.p[0],q.p[1],q.p[2]+dz),M4.RX(r[0]),M4.RY(r[1]),M4.RZ(r[2]),M4.S(q.s[0],q.s[1],q.s[2])));
-     if(q.ink) L.push([ball,M,0,.2,cur.ink,null,null,null,1]);   /* narina/poro: pintinha escura */
-     else if(q.t!=='b') L.push([SHAPES[q.t],M,0,.5,ncol]);   /* formas facetadas: sombreado com contorno (as faces aparecem) */
-     else L.push([ball,M,6,.65,q.col?[ncol[0]*q.col[0],ncol[1]*q.col[1],ncol[2]*q.col[2]]:ncol,null,null,null,1]);}
+   L.push([ball,M4.mul(NB,M4.S(.21,.17,.17)),6,.65,ncol,null,1]);
    gl.uniform4f(U.uHurt3,H.broke>0?Math.max(.35,H.nb||0):0,.35+.65*(H.nd||0),bd*.09,0);}
   /* orelhas: conchinhas dos lados da cabeça, um pouco mais rosadas por dentro */
   for(const sd of [-1,1]){const eh=(S.hurt&&S.hurt[sd<0?'el':'er'])||0, es=1+eh*.28, ec=[cur.skin[0],cur.skin[1]*(1-eh*.42),cur.skin[2]*(1-eh*.4)];   /* orelha machucada: vermelha e inchada */
-    L.push([ball,M4.mul(HEADM,M4.chain(M4.T(hc[0]+sd*1.12,hc[1]-.04,hc[2]-.04),M4.RY(sd*.55),M4.RZ(sd*-.15),M4.S(.11*es,.28*es,.2*es))),6,.6,ec,null,null,null,1]);
-    L.push([ball,M4.mul(HEADM,M4.chain(M4.T(hc[0]+sd*(1.17+eh*.03),hc[1]-.04,hc[2]+.02),M4.RY(sd*.55),M4.RZ(sd*-.15),M4.S(.05*es,.18*es,.12*es))),6,.4,[ec[0],ec[1]*.82,ec[2]*.86],null,null,null,1]);}   /* [8]=1: sem casca de contorno (o contorno é desenhado na borda pelo shader) */
+    L.push([ball,M4.mul(HEADM,M4.chain(M4.T(hc[0]+sd*1.12,hc[1]-.04,hc[2]-.04),M4.RY(sd*.55),M4.RZ(sd*-.15),M4.S(.11*es,.28*es,.2*es))),6,.6,ec,null,1]);
+    L.push([ball,M4.mul(HEADM,M4.chain(M4.T(hc[0]+sd*(1.17+eh*.03),hc[1]-.04,hc[2]+.02),M4.RY(sd*.55),M4.RZ(sd*-.15),M4.S(.05*es,.18*es,.12*es))),6,.4,[ec[0],ec[1]*.82,ec[2]*.86],null,1]);}   /* [6]=1: sem casca de contorno (o contorno é desenhado na borda pelo shader) */
   /* sangue do ouvido: filete que desce da orelha pelo lado do rosto até a mandíbula */
   for(const sd of [-1,1]){const eb=(S.hurt&&S.hurt[sd<0?'ebl':'ebr'])||0; if(eb<.02) continue;
     const path=earTrail(sd), n=Math.max(1,Math.ceil(eb*path.length));
     for(let i=0;i<n;i++){const [q,nn]=path[i], r=.026*(i===n-1?1.5:1), ax=norm3(cross([0,1,0],nn)), ay=cross(nn,ax);
       const M=new Float32Array([ax[0]*r,ax[1]*r,ax[2]*r,0, ay[0]*r*1.6,ay[1]*r*1.6,ay[2]*r*1.6,0, nn[0]*r*.35,nn[1]*r*.35,nn[2]*r*.35,0, q[0],q[1],q[2],1]);
-      L.push([ball,M4.mul(HEADM,M),0,.7,[.62,.03,.09],null,null,null,1]);}}
+      L.push([ball,M4.mul(HEADM,M),0,.7,[.62,.03,.09],null,1]);}}
   {const H=S.hurt||{}; gl.uniform4f(U.uHurt,H.bl||0,H.br||0,H.cl||0,H.cr||0); gl.uniform4f(U.uHurt2,Math.min(1,(H.band||0)*3),H.lip>.45?H.lip:0,.35+.65*(H.drip||0),({calmo:.02,irritado:-.06,bravo:-.15,furioso:-.2,feliz:-.2,assustado:-.24,apanhando:-.13,triste:-.11,choro:-.11,deboche:-.07,lingua:-.1,zonzo:-.06,nocaute:-.07}[S.mouthK]??-.08));   /* o sangue sai do lábio de baixo de cada boca */
    const bb=H.bb||[0,0,0]; gl.uniform4f(U.uBB,bb[0],bb[1],bb[2],H.bbi||0);
    gl.uniform1f(U.uOutfit,OUTFIT); gl.uniform3fv(U.uSkinC,cur.skin); gl.uniform2f(U.uTie,(S.tie||0)*(S.tieDir||1)+.12+(RM?0:Math.sin(S.t*2.3)*.04+clamp((S.leanV?S.leanV[0]:0)*.6,-.3,.3)),0);
@@ -2709,80 +2431,55 @@ function frame(now){
      const M=new Float32Array([x[0]*r,x[1]*r,x[2]*r,0, y[0]*r,y[1]*r,y[2]*r,0, n[0]*r*.8,n[1]*r*.8,n[2]*r*.8,0, g.p[0],g.p[1],g.p[2],1]);
      L.push([ball,M4.mul(HEADM,M),0,.6,[cur.skin[0]*.94,cur.skin[1]*(.86-g.r*1.2),cur.skin[2]*(.92-g.r*.4)]]);}}   /* rosado-arroxeado */
   const zh=(S.zap>0?1:Math.max(0,S.zapHair||0)/1.2), HZ=zh>0&&!RM?M4.chain(HEADM,M4.T(hc[0],hc[1],hc[2]),M4.S(1+.06*zh,1+(.22+.05*Math.sin(S.t*60))*zh,1+.06*zh),M4.T(-hc[0],-hc[1],-hc[2])):HEADM;   /* choque: cabelo em pé */
-  parts.acc.forEach(a=>{const M=a.on==='head'?(a.noOut?HEADM:HZ):MB, M2=a.on==='head'?null:CB;
-    L.push([a.m,M,a.noOut?.25:0,a.gloss,null,null,M2,1,a.hull||a.noOut?2:0]);
-    if(a.hull) L.push([a.hull,M,0,0,null,null,M2,1,0,1]);});   /* malha chapada sem contorno + casca só pro contorno */
-  /* braço: o tubo nasce por dentro do tronco (sem recorte no ombro); poucos anéis na parte escondida */
-  const NIN=4, gOf=t=>{const q=t*(TS-1); return q<NIN?q/NIN:1+(q-NIN)/(TS-1-NIN)*2;};
+  parts.acc.forEach(a=>{const M=a.noOut?HEADM:HZ;   /* acessórios: todos são da cabeça */
+    L.push([a.m,M,a.noOut?.25:0,a.gloss,null,1,a.hull||a.noOut?2:0]);
+    if(a.hull) L.push([a.hull,M,0,0,null,1,0,1]);});   /* malha chapada sem contorno + casca só pro contorno */
+  /* mãos: a luva desenhada persegue a mão com velocidade máxima: no tranco do golpe ela voa, mas não "teleporta" */
   const arms=S.arms.map((a,k)=>{
-    if(FLOAT){
-      /* a luva desenhada persegue a mão com velocidade máxima: no tranco do golpe ela voa, mas não "teleporta" */
-      const h=X[k?J.haR:J.haL], el=X[k?J.elR:J.elL];
-      if(!a.dp||dist3(a.dp,h)>1.5) a.dp=h.slice();
-      const d=sub3(h,a.dp), l=Math.hypot(d[0],d[1],d[2]), m=(S.parry&&S.parry.side===a.side?45:11)*dt, q=l>m?m/l:1; for(let c=0;c<3;c++) a.dp[c]+=d[c]*q;
-      return {a:a,e:{end:a.dp,tan:norm3(sub3(a.dp,el))}};
-    }
-    a.tube=a.tube||newTube();
-    const P=[M4.pt(CHESTM,[a.side*.2*PW(),1.2,.02])].concat([k?J.shR:J.shL,k?J.elR:J.elL,k?J.haR:J.haL].map(i=>X[i])), smp=[];
-    for(let s=0;s<TS;s++) smp.push(catmull(P,gOf(s/(TS-1))));
-    const prof=armProfile(C.arms), e=fillTube(a.tube,smp,u=>prof(Math.max(0,(gOf(u)-1)/2))); return {a:a,e:e};});
-  /* pernas: curva do pé (parado no chão) até o quadril (que se move com o corpo) */
+    const h=X[k?J.haR:J.haL], el=X[k?J.elR:J.elL];
+    if(!a.dp||dist3(a.dp,h)>1.5) a.dp=h.slice();
+    const d=sub3(h,a.dp), l=Math.hypot(d[0],d[1],d[2]), m=(S.parry&&S.parry.side===a.side?45:11)*dt, q=l>m?m/l:1; for(let c=0;c<3;c++) a.dp[c]+=d[c]*q;
+    return {a:a,e:{end:a.dp,tan:norm3(sub3(a.dp,el))}};});
+  /* pés: sapatões no tornozelo (sem pernas desenhadas) */
   S.feet.forEach((f,k)=>{
-    const P=[k?J.anR:J.anL,k?J.knR:J.knL,k?J.hiR:J.hiL].map(i=>X[i]);
-    if(!FLOAT){const s=f.s; S.legT=S.legT||{}; const T=S.legT[s]=S.legT[s]||newTube(), pn=P.length-1, smp=[]; for(let i=0;i<TS;i++) smp.push(catmull(P,i/(TS-1)*pn));
-      fillTube(T,smp,legProfile(C.legs)); L.push([T,M4.T(0,0,0),0,.45]);}
-    /* sapato orientado pela canela: em pé fica reto no chão; caído, vai junto com a perna */
+    const P=[k?J.anR:J.anL,k?J.knR:J.knL].map(i=>X[i]);
     let an=P[0], u=norm3(sub3(P[1],an));
-    /* sem pernas: em pé o sapato fica sempre reto no chão (sem a inclinação da canela); caído, vai com a perna */
-    if(FLOAT){
-      f.flat=(f.flat==null?1:f.flat)+(((S.down&&S.down.ph!=='getup')?0:1)-(f.flat==null?1:f.flat))*Math.min(1,dt*7);
-      const w=f.flat; u=norm3([u[0]*(1-w),u[1]*(1-w)+w,u[2]*(1-w)]); an=[an[0],mix(an[1],.14+f.p[1],w),an[2]];
-    }
+    /* em pé o sapato fica sempre reto no chão (sem a inclinação da canela); caído, vai junto com a perna */
+    f.flat=(f.flat==null?1:f.flat)+(((S.down&&S.down.ph!=='getup')?0:1)-(f.flat==null?1:f.flat))*Math.min(1,dt*7);
+    const w=f.flat; u=norm3([u[0]*(1-w),u[1]*(1-w)+w,u[2]*(1-w)]); an=[an[0],mix(an[1],.14+f.p[1],w),an[2]];
     const fw0=S.down?M4.dir(MODEL,[0,0,1]):M4.dir(M4.RY(f.yaw),[0,0,1]), d0=dot(fw0,u), z=norm3([fw0[0]-u[0]*d0,fw0[1]-u[1]*d0,fw0[2]-u[2]*d0]), x=cross(u,z);
     const at=(a,b)=>[an[0]-u[0]*a+z[0]*b,an[1]-u[1]*a+z[1]*b,an[2]-u[2]*a+z[2]*b];
-    if(FLOAT){
-      /* sapatão redondo de desenho animado, com bico grande */
-      L.push([ball,M4.mul(basis(at(-.03,.12),x,u,z),M4.S(.25,.18,.43)),0,.6,C.shoe]);
-      L.push([ball,M4.mul(basis(at(.095,.12),x,u,z),M4.S(.26,.05,.44)),0,.2,C.sole]);
-    } else {
-    L.push([ball,M4.mul(basis(at(.03,.08),x,u,z),M4.S(.21,.12,.3)),0,.55,C.shoe]);
-    L.push([ball,M4.mul(basis(at(.105,.08),x,u,z),M4.S(.22,.04,.31)),0,.2,C.sole]);
-    }
+    /* sapatão redondo de desenho animado, com bico grande */
+    L.push([ball,M4.mul(basis(at(-.03,.12),x,u,z),M4.S(.25,.18,.43)),0,.6,C.shoe]);
+    L.push([ball,M4.mul(basis(at(.095,.12),x,u,z),M4.S(.26,.05,.44)),0,.2,C.sole]);
   });
+  /* orientação de cada mão (vai para a lista das figurinhas) */
   arms.forEach(({a,e})=>{
-    if(!FLOAT) L.push([a.tube,M4.T(0,0,0),0,.4]);
     const fw=norm3(M4.dir(CHESTM,[0,0,1])), d0=dot(fw,e.tan), z0=norm3([fw[0]-e.tan[0]*d0,fw[1]-e.tan[1]*d0,fw[2]-e.tan[2]*d0]), x0=cross(e.tan,z0);
-    /* mão relaxada: palma girada uns 60° para dentro (virada para a coxa), dedos ainda um pouco visíveis de frente, polegar para a frente */
-    const th=-a.side*(FLOAT?1.9:1.05), c=Math.cos(th), sn=Math.sin(th);
-    let x=[x0[0]*c+z0[0]*sn,x0[1]*c+z0[1]*sn,x0[2]*c+z0[2]*sn], z=[-x0[0]*sn+z0[0]*c,-x0[1]*sn+z0[1]*c,-x0[2]*sn+z0[2]*c], y=e.tan;
+    /* mão relaxada: palma girada para dentro (virada para a coxa) */
+    const th=-a.side*1.9, c=Math.cos(th), sn=Math.sin(th);
+    let z=[-x0[0]*sn+z0[0]*c,-x0[1]*sn+z0[1]*c,-x0[2]*sn+z0[2]*c], y=e.tan;
     /* gesto de "para!": dedos para cima e palma virada para fora; a mão gira até lá aos poucos */
     a.hb=(a.hb||0)+((a.stop?1:0)-(a.hb||0))*Math.min(1,dt*9);
     if(a.hb>.01){
       const up=norm3(M4.dir(CHESTM,[0,1,0])), fwd=norm3(M4.dir(CHESTM,[0,0,1])), b=a.hb;
       y=norm3([mix(y[0],up[0],b),mix(y[1],up[1],b),mix(y[2],up[2],b)]);
       let zz=[mix(z[0],fwd[0],b),mix(z[1],fwd[1],b),mix(z[2],fwd[2],b)]; const dd=dot(zz,y); zz=norm3([zz[0]-y[0]*dd,zz[1]-y[1]*dd,zz[2]-y[2]*dd]);
-      z=zz; x=cross(y,z);
+      z=zz;
     }
     a.fb=(a.fb||0)+((a.flip?1:0)-(a.fb||0))*Math.min(1,dt*9);
     if(a.fb>.01){
       const up=norm3(M4.dir(CHESTM,[0,1,0])), bk=norm3(M4.dir(CHESTM,[0,0,-1])), b=a.fb;
       y=norm3([mix(y[0],up[0],b),mix(y[1],up[1],b),mix(y[2],up[2],b)]);
       let zz=[mix(z[0],bk[0],b),mix(z[1],bk[1],b),mix(z[2],bk[2],b)]; const dd=dot(zz,y); zz=norm3([zz[0]-y[0]*dd,zz[1]-y[1]*dd,zz[2]-y[2]*dd]);
-      z=zz; x=cross(y,z);
+      z=zz;
     }
-    const at=(u,v)=>[e.end[0]+y[0]*u+z[0]*v,e.end[1]+y[1]*u+z[1]*v,e.end[2]+y[2]*u+z[2]*v];
-    if(FLOAT){HS.push({a:a,p:e.end,y:y,z:z});
-    } else {
-    const hand=(u,vx,vz,sx,sy,sz)=>{const p=at(u,vz); L.push([ball,M4.mul(basis([p[0]+x[0]*vx,p[1]+x[1]*vx,p[2]+x[2]*vx],x,y,z),M4.S(sx,sy,sz)),0,.4,C.arms.skin]);};
-    hand(.12,0,0,.15,.15,.09);
-    [-.08,0,.08].forEach((v,i)=>hand(.26+(i===1?.02:0),v,0,.06,.1,.065));
-    hand(.08,-a.side*.14,.03,.065,.09,.06);
-    }
+    HS.push({a:a,p:e.end,y:y,z:z});
   });
   /* contorno: casca de trás de tudo, empurrada para fora, em tinta */
   const px=(3.2*dprNow)/cv.height*2;
   gl.enable(gl.CULL_FACE); gl.cullFace(gl.FRONT); gl.uniform1f(U.uOutline,px);
-  L.forEach(d=>{if(d[8]) return; gl.uniform1f(U.uOutline,px*(d[7]||1)); drawMesh(d[0],d[1],3,0,null,d[6]);});
+  L.forEach(d=>{if(d[6]) return; gl.uniform1f(U.uOutline,px*(d[5]||1)); drawMesh(d[0],d[1],3,0,null);});
   gl.cullFace(gl.BACK); gl.uniform1f(U.uOutline,0);
   /* rosto: boca na pele da cabeça e olhos com pálpebras */
   gl.uniform3fv(U.uMouthC,[hc[0],hc[1]+C.mouth.y,hc[2]+C.mouth.z]);
@@ -2804,7 +2501,7 @@ function frame(now){
     const a=pp(-1), b=pp(1);
     if(P||(inj['-1']>=1&&inj['-1']<=3)||(inj['1']>=1&&inj['1']<=3)||inj['-1']===5||inj['1']===5){gl.uniform4f(U.uPL,a[0],a[1],b[0],b[1]); gl.uniform2f(U.uPR,R.rx*k,R.ry*k);}
     else gl.uniform2f(U.uPR,0,0);}}
-  L.forEach(d=>{if(d[9]) return; if(d[8]===1) gl.disable(gl.CULL_FACE); drawMesh(d[0],d[1],d[2],d[3],d[4],d[6]); if(d[8]===1) gl.enable(gl.CULL_FACE);});
+  L.forEach(d=>{if(d[7]) return; if(d[6]===1) gl.disable(gl.CULL_FACE); drawMesh(d[0],d[1],d[2],d[3],d[4]); if(d[6]===1) gl.enable(gl.CULL_FACE);});
   drawHandSprites(HS,dt);
 
   for(let i=FXP.length-1;i>=0;i--){
@@ -2825,14 +2522,13 @@ const hex=c=>'#'+c.map(v=>Math.round(clamp(v,0,1)*255).toString(16).padStart(2,'
 const unhex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255);
 function setSkinData(rgb){
   const C=CHARS[0], k=(m,a)=>[rgb[0]*m[0]+a,rgb[1]*m[1]+a,rgb[2]*m[2]+a].map(v=>clamp(v,0,1));
-  C.skin=rgb.slice(); C.arms.skin=rgb.slice(); C.legs.a=FABRIC.slice(); C.legs.b=FABRIC.slice(); outfitFeet();
-  EK.SKIN=hex(rgb); HK.SKIN=hex(k([1,1,1],.02)); HK.SH=hex(k([.8,.8,.88],0)); HK.CUP=hex(k([.9,.9,.95],0));
+  C.skin=rgb.slice(); outfitFeet();
+  HK.SKIN=hex(k([1,1,1],.02)); HK.SH=hex(k([.8,.8,.88],0)); HK.CUP=hex(k([.9,.9,.95],0));
 }
 function applySkin(rgb){
   setSkinData(rgb); try{localStorage.setItem('joao_pele',hex(rgb));}catch(e){}
-  if(parts){const C=CHARS[0], seam=[rgb[0]*.71,rgb[1]*.7,rgb[2]*.79];
+  if(parts){const C=CHARS[0];
     if(parts.head) parts.head.recolor((x,y,z)=>C.colHead(x,y,z));
-    if(parts.body) parts.body.recolor((x,y,z)=>C.colBody(x,y,z));
     (parts.acc||[]).forEach(a=>{if(a.noOut) a.m.recolor(()=>shaveCol(rgb));});
   }
   buildEyes(); buildHands();
@@ -2859,11 +2555,11 @@ try{if(localStorage.getItem('joao_pele_v')!=='2'){localStorage.removeItem('joao_
 const KEEP=['marks','el','er','ebl','ebr','epl','epr','bl','br','xl','xr','tl','tr','vl','vr','bru','lumps','cuts','bbi','bb','broke','bend','nb','nose','hl','hr'];
 function saveHealth(){try{const H=S.hurt||{}, o={}; KEEP.forEach(k=>{if(H[k]!=null) o[k]=H[k];});
   localStorage.setItem('joao_saude',JSON.stringify({h:o,up:[...TEETH.up],dn:[...TEETH.dn]}));}catch(e){}}
-try{const d=JSON.parse(localStorage.getItem('joao_saude')||'null'); if(d){S.hurt=Object.assign({bl:0,br:0,cl:0,cr:0,galo:0,band:0,bbi:0},d.h||{});
+try{const d=JSON.parse(localStorage.getItem('joao_saude')||'null'); if(d){S.hurt=Object.assign({bl:0,br:0,cl:0,cr:0,band:0,bbi:0},d.h||{});
   (d.up||[]).forEach(k=>TEETH.up.add(k)); (d.dn||[]).forEach(k=>TEETH.dn.add(k)); (S.hurt.cuts||[]).forEach(c=>{c.bleed=0; c.f=1;});}}catch(e){}
 setInterval(saveHealth,2500); addEventListener('pagehide',saveHealth);
 function healAll(){
-  S.hurt={bl:0,br:0,cl:0,cr:0,galo:0,band:0,bbi:0}; TEETH.up.clear(); TEETH.dn.clear(); buildMouths();
+  S.hurt={bl:0,br:0,cl:0,cr:0,band:0,bbi:0}; TEETH.up.clear(); TEETH.dn.clear(); buildMouths();
   BLOOD.drops.length=0; BLOOD.stains.length=0; S.tie=0; S.handPain=null; S.nut=null;
   if(parts&&parts.ball) parts.ball.recolor((x,y,z)=>Math.abs(y-BALL_C+.03)<.014&&z>-.2?[.8,.79,.78]:FABRIC.slice());
   hairBumps([]); try{localStorage.removeItem('joao_saude');}catch(e){}
