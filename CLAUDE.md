@@ -31,11 +31,14 @@ xinga, chora e provoca. Cada golpe dá moedas, e com as moedas o jogador compra 
   sai do lugar). Pupila pequena (bravo, furioso) só tem o brilho pequeno. Expressões: calmo,
   irritado, bravo, furioso, feliz, assustado, apanhando, zonzo, nocaute, deboche, triste, choro etc.
 - **Cabelo**: peça única, lisa e esculpida (capacete de brinquedo), castanha com a raiz mais escura:
-  uma casca rente à cabeça cortada na linha do cabelo (`hairLine`) e 6 mechas grossas e arredondadas
-  (`HAIR_LOCKS`: 2 no topete, 2 no alto, 2 atrás) que deitam sobre a cabeça e levantam a ponta para
-  cima e para trás. É um campo de distância (`hairSD`) virado malha pelo `meshSDF` (passo .07, cerca
-  de 7,7 mil triângulos: não diminua o passo, pesa no celular). O galo estufa o cabelo (`hairBumps`) e
-  o Taser estica o cabelo para cima.
+  uma casca rente à cabeça cortada na linha do cabelo (`hairLine`, que passa por cima da orelha e desce
+  atrás dela até quase a nuca) e 7 mechas grossas e arredondadas (`HAIR_LOCKS`, feitas por `hairLock`:
+  2 no topete, 2 no alto, 2 atrás e 1 no meio da nuca) que deitam sobre a cabeça e levantam a ponta para
+  cima e para trás; as de trás são mais largas e baixas e descem cobrindo a nuca. É um campo de distância
+  (`hairSD`) virado malha pelo `meshSDF` (passo .07, cerca de 9,7 mil triângulos: não diminua o passo,
+  pesa no celular). O galo estufa o cabelo (`hairBumps`) e o Taser estica o cabelo para cima.
+  A parte raspada (`shavedMesh`) é só a costeleta na frente da orelha e uma faixa estreita acima do
+  pescoço, em castanho bem mais claro e acetinado (`shaveCol`, brilho .35), como cabelo curtinho.
 - **Comportamento**: humor (calmo/bravo, com 3 níveis de raiva), tristeza e choro em sequências
   longas de golpes, defesa com as mãos, guarda no lugar onde você insiste, gestos à toa (acenar,
   apontar, dedo do meio, sacudir o punho...).

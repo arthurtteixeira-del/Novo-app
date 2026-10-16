@@ -311,7 +311,9 @@ const NOSE_Y=-.26;   /* altura do nariz (em relação ao centro da cabeça): bem
    arredondadas que saem dela e se curvam para cima e para trás: 2 no topete, 2 no alto, 2 atrás. As mechas se fundem na
    casca com união suave (sem quina), mas deixam um sulco entre elas. Vértices compartilhados: sombreado liso, e o contorno
    de nanquim é o normal das peças. Coordenadas da cabeça (centro y=2.42, raio 1.12) */
-function hairLine(az){const a=Math.abs(az); return a<1.1?.66:a<2.2?mix(.66,.32,sstep(1.1,1.7,a)):mix(.32,-.05,sstep(2.2,2.9,a));}
+/* linha do cabelo (elevação, por azimute): alta na testa, passa por cima da orelha e desce atrás dela até quase a nuca,
+   deixando só uma faixa estreita de raspado acima do pescoço */
+function hairLine(az){const a=Math.abs(az); return a<1.1?.66:a<1.85?mix(.66,.32,sstep(1.1,1.7,a)):mix(.32,-.42,sstep(1.85,2.4,a));}
 /* mecha: tubo afinando que passa por 3 pontos (base → meio → ponta), raio r0 → r1 → r2 */
 function lockSD(x,y,z,P,R){let d=1e9;
   for(let s=0;s<2;s++){const a=P[s], b=P[s+1], ux=b[0]-a[0], uy=b[1]-a[1], uz=b[2]-a[2], px=x-a[0], py=y-a[1], pz=z-a[2];
@@ -319,12 +321,13 @@ function lockSD(x,y,z,P,R){let d=1e9;
   return d;}
 /* cada mecha em ângulos na cabeça: [azimute, elevação, quanto sai da superfície] da base, do meio e da ponta.
    Base e meio ficam deitados sobre a casca (só um gomo de relevo); a ponta levanta para cima e para trás */
+const hairPt=(s,q)=>{const R=1.12+q[2], c=Math.cos(q[1]); return [s*Math.sin(q[0])*c*R,Math.sin(q[1])*R,Math.cos(q[0])*c*R];};
+const hairLock=(s,b,m,t,r)=>({P:[hairPt(s,b),hairPt(s,m),hairPt(s,t)],R:[r,r*.82,r*.58]});
 const HAIR_LOCKS=[1,-1].flatMap(s=>[
-  [[.38,.9,-.14],[.32,1.12,-.02],[.22,1.36,.24],.31],      /* topete, sobre a testa */
-  [[1.32,.5,-.12],[1.2,.9,-.01],[1.1,1.2,.26],.31],     /* lado, no alto da cabeça */
-  [[2.62,.26,-.12],[2.56,.66,-.02],[2.42,.96,.3],.3]       /* atrás, sobe pela nuca */
-].map(([b,m,t,r])=>{const P=q=>{const R=1.12+q[2], c=Math.cos(q[1]); return [s*Math.sin(q[0])*c*R,Math.sin(q[1])*R,Math.cos(q[0])*c*R];};
-  return {P:[P(b),P(m),P(t)],R:[r,r*.82,r*.58]};}));
+  hairLock(s,[.38,.9,-.14],[.32,1.12,-.02],[.22,1.36,.24],.31),     /* topete, sobre a testa */
+  hairLock(s,[1.32,.5,-.12],[1.2,.9,-.01],[1.1,1.2,.26],.31),       /* lado, no alto da cabeça */
+  hairLock(s,[2.45,-.3,-.17],[2.45,.3,-.08],[2.35,.85,.26],.36)        /* atrás: desce até a nuca e sobe pela cabeça */
+]).concat([hairLock(1,[Math.PI,-.32,-.17],[Math.PI,.22,-.08],[Math.PI,.66,.2],.36)]);   /* 7ª: no meio da nuca */
 function hairSD(x,y,z){
   const HY=2.42, ly=y-HY, r=len3(x,ly,z)||1e-6, el=Math.asin(clamp(ly/r,-1,1)), az=Math.atan2(x,z);
   /* casca: a cabeça inflada, cortada (com borda arredondada) na linha do cabelo */
@@ -337,7 +340,7 @@ function hairGelMesh(){
   const ROOT=[.3,.17,.1], TIP=[.55,.33,.19];
   /* raiz mais escura, pontas das mechas mais claras */
   const col=(x,y,z)=>{const r=len3(x,y-2.42,z), t=clamp(sstep(1.16,1.6,r)*.75+sstep(.7,1.5,y-2.42)*.25,0,1); return [mix(ROOT[0],TIP[0],t),mix(ROOT[1],TIP[1],t),mix(ROOT[2],TIP[2],t)];};
-  return {mesh:meshSDF(hairSD,col,[-1.4,2.42-.25,-1.5],[1.4,2.42+1.6,1.4],.07)};
+  return {mesh:meshSDF(hairSD,col,[-1.4,2.42-.75,-1.5],[1.4,2.42+1.6,1.4],.07)};
 }
 /* parte raspada (máquina): faixa rente à pele que sai de baixo do cabelo, desce até a orelha (costeleta na frente dela,
    contorno por cima e por trás) e termina na nuca com o pezinho quadrado. Cada vértice é projetado na superfície real da cabeça.
@@ -348,7 +351,7 @@ function shaveLow(az){const a=Math.abs(az);
   if(a<2.45) return mix(.2,-.58,sstep(1.82,2.35,a));         /* desce por trás da orelha */
   return -.58-.06*sstep(2.45,2.6,a);                         /* pezinho: reto e com quina */
 }
-const shaveCol=sk=>[sk[0]*.5+.3*.5,sk[1]*.5+.2*.5,sk[2]*.5+.16*.5];   /* raspado: a pele escurecida pelos fiozinhos (serve pra qualquer cor de pele) */
+const shaveCol=sk=>[.6,.41,.28].map((v,i)=>mix(v,sk[i],.15));   /* raspado: castanho do cabelo bem mais claro (cabelo curtinho), com um toque da cor da pele */
 function shavedMesh(){
   const HY=2.42, ch=CHARS[0], A0=1.14, NA=90, NR=10, P=[], C=[], I=[], COL=shaveCol(ch.skin);
   const surf=(az,el)=>{const d=[Math.cos(el)*Math.sin(az),Math.sin(el),Math.cos(el)*Math.cos(az)]; let lo=.4,hi=1.7;
@@ -374,7 +377,7 @@ const CHARS=[{
     return smin(d,cap(x,y,z,0,NECK-h[1]-.12,0,0,-.8,0,.15),.08);
   },
   colHead(x,y,z){return this.skin.slice();},
-  acc:[{on:'head',gloss:.05,mesh:shavedMesh,noOut:1},{on:'head',gloss:.15,mesh:hairGelMesh}],
+  acc:[{on:'head',gloss:.35,mesh:shavedMesh,noOut:1},{on:'head',gloss:.15,mesh:hairGelMesh}],
   lines:{
     idle:['Oi.','E aí?','Vai ficar só olhando?','Duvido me derrubar.','Tô de boa.','Pode vir.'],
     mad:['Ei!','Qual é a tua?','Tá doendo, ô!','Vem! Vem que tem!','Me respeita!','Tá achando que é quem?','Covarde!','Isso não vai ficar assim!','Otário!','Vacilão!','Cê é muito mané!'],
