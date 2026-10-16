@@ -396,43 +396,25 @@ vec3 toon(vec3 base, vec3 N, vec3 V, float ao, float gloss){
   return col*mix(.8,1.,ao);
 }
 void main(){
-  if(uMode>3.5&&uMode<5.75){
-    /* cenário: academia de boxe de bairro, à noite. Chão = lona do ringue (azul-acinzentada, gasta, com o logo no meio);
-       fora do ringue, piso de madeira escura. Parede de tijolo aparente com cartazes de luta, iluminada por uma lâmpada pendurada. */
-    vec3 c;
-    if(uMode<4.5){
-      vec2 p=vW.xz; float inR=step(abs(p.x),4.3)*step(-2.75,p.y)*step(p.y,5.);
-      float n=fract(sin(dot(floor(p*9.),vec2(12.9,78.2)))*43758.5);
-      vec3 mat=vec3(.62,.68,.78)*(.94+.06*n);
-      float lg=abs(length(p-vec2(0.,.4))-1.5);
-      mat=mix(mat,vec3(.78,.3,.32),(1.-smoothstep(.06,.09,lg))*.55);                 /* círculo do logo */
-      mat=mix(mat,mat*.85,smoothstep(1.4,0.,length(p-vec2(.2,.3)))*.25);            /* gasto no meio */
-      float pl=fract(p.x*1.6), wd=fract(sin(floor(p.x*1.6)*91.7)*437.)*.08;
-      vec3 wood=vec3(.36,.23,.15)*(.9+wd)*(1.-.35*(1.-smoothstep(.0,.04,pl))*(1.-smoothstep(.96,1.,pl)));
-      c=mix(wood,mat,inR);
-      c=mix(c,vec3(.25,.27,.33),(1.-smoothstep(.0,.05,abs(p.y+2.75)))*step(abs(p.x),4.3)); /* borda da lona */
-      float sh=.0; for(int i=0;i<9;i++){vec4 b=uSB[i]; if(b.w<.01) continue; float q=length(vW.xz-b.xy)/b.z; sh=max(sh,b.w*(1.-smoothstep(.35,1.,q)));}
-      c*=1.-.7*sh;
-      c*=.55+.6*exp(-dot(p-vec2(0.,.6),p-vec2(0.,.6))/9.);                            /* luz da lâmpada */
-    } else {
-      vec2 g=vW.xy;
-      vec2 b=g*vec2(2.,4.); b.x+=step(1.,mod(b.y,2.))*.5; vec2 f=fract(b), id=floor(b);
-      float rn=fract(sin(dot(id,vec2(27.1,61.7)))*4375.5);
-      vec3 brick=mix(vec3(.5,.24,.18),vec3(.62,.32,.22),rn)*(.9+.1*fract(rn*7.));
-      float mortar=max(1.-smoothstep(.0,.06,f.y),1.-smoothstep(.0,.03,f.x));
-      c=mix(brick,vec3(.26,.22,.2),mortar);
-      /* cartazes de luta colados na parede */
-      vec2 q1=(g-vec2(-2.2,2.9))/vec2(.7,.95), q2=(g-vec2(2.3,2.7))/vec2(.65,.85);
-      float r1=step(max(abs(q1.x),abs(q1.y)),1.), r2=step(max(abs(q2.x),abs(q2.y)),1.);
-      vec3 p1=mix(vec3(.95,.82,.35),vec3(.8,.15,.15),step(.35,q1.y)); p1=mix(p1,vec3(.12),(1.-step(.25,abs(q1.y+.35)))*step(abs(q1.x),.8)*step(.5,fract(q1.x*6.)));
-      p1=mix(p1,vec3(.15),(1.-smoothstep(.0,.12,abs(length(q1-vec2(0.,-.05))-.3)))*.9);
-      vec3 p2=mix(vec3(.2,.35,.7),vec3(.95),step(.55,q2.y)); p2=mix(p2,vec3(.98,.85,.2),(1.-smoothstep(.3,.36,length(q2-vec2(0.,-.1)))));
-      c=mix(c,p1*(.92+.08*fract(q1.y*3.)),r1); c=mix(c,p2,r2);
-      c=mix(c,vec3(.1),max((1.-smoothstep(.0,.03,abs(max(abs(q1.x),abs(q1.y))-1.)))*step(max(abs(q1.x),abs(q1.y)),1.03),(1.-smoothstep(.0,.03,abs(max(abs(q2.x),abs(q2.y))-1.)))*step(max(abs(q2.x),abs(q2.y)),1.03))*.6);
-      c*=.42+.7*exp(-(g.x*g.x)/10.-(g.y-3.3)*(g.y-3.3)/9.);                            /* cone de luz na parede */
-      c*=mix(.6,1.,smoothstep(0.,1.2,g.y));
+  if(uMode>3.5&&uMode<4.5){
+    /* cenário: estúdio de foto de brinquedo. Fundo infinito (chão e parede numa curva só) verde-menta claro,
+       luz de cima (mais claro no alto, um pouco mais escuro perto da câmera), pedestal redondo baixo e a sombra macia do boneco.
+       Tudo calculado pela posição, sem textura nem ruído: liso e barato. */
+    vec3 c=vec3(.75,.9,.87)*mix(.86,1.06,smoothstep(-1.5,5.,vW.y-vW.z*.3));
+    c+=vec3(.05)*exp(-dot(vW.xz,vW.xz)/7.-vW.y*vW.y);                                /* poça de luz em volta dele */
+    if(vW.y<.4){
+      vec2 p=vW.xz; float r=length(p), rf=length(p-vec2(0.,.13));
+      /* pedestal: disco claro com borda fina; a faixa da frente (o disco deslocado pra câmera) faz a lateral do bolacha */
+      float top=1.-smoothstep(1.78,1.8,r), side=(1.-smoothstep(1.78,1.8,rf))*(1.-top);
+      c*=1.-.1*(1.-smoothstep(0.,.35,rf-1.8))*(1.-top-side);                          /* sombrinha do pedestal no chão */
+      c=mix(c,vec3(.86,.95,.93)*mix(1.,.95,smoothstep(.6,1.8,r)),top);
+      c=mix(c,vec3(.98,1.,1.),(1.-smoothstep(.0,.025,abs(r-1.75)))*top*.7);         /* fio de luz na borda de cima */
+      c=mix(c,vec3(.5,.7,.7),side);
+      /* sombra macia do boneco: soma de borrões redondos sob cada parte do corpo (uSB) */
+      float sh=0.; for(int i=0;i<9;i++){vec4 b=uSB[i]; if(b.w<.01) continue; float q=length(p-b.xy)/b.z; sh=max(sh,b.w*(1.-smoothstep(.15,1.,q)));}
+      c=mix(c,c*vec3(.45,.55,.62),sh*(1.-smoothstep(.0,.4,vW.y)));
     }
-    c*=mix(1.,.65,smoothstep(3.,6.,abs(vW.x)));
+    c*=mix(1.,.88,smoothstep(3.5,8.,abs(vW.x)));
     gl_FragColor=vec4(c,1.); return;
   }
   if(uMode>2.5&&uMode<3.5){gl_FragColor=vec4(uInk,1.);return;}
@@ -668,13 +650,20 @@ const U={};
 ['uMk','uSB','uCut','uBurst','uTear','uOutfit','uSkinC','uTie','uBru','uHurt','uHurt2','uHurt3','uBB','uRed','uInjSt','uM','uVP','uOutline','uAspect','uMode','uGloss','uUseTint','uCam','uTint','uInk','uMouthC','uMCell','uMTex','uMOn','uMSz','uECell','uEInj','uEInj2','uPL','uEyeDC','uPR','uETex','uEOn']
   .forEach(n=>U[n]=gl.getUniformLocation(prog,n));
 gl.enable(gl.DEPTH_TEST); gl.clearColor(0,0,0,0);
-/* cenário: dois retângulos (chão e parede do fundo) */
-function quadMesh(P){
-  const n=[0,1,0], pos=[], nor=[], col=[]; P.forEach(p=>{pos.push(...p); nor.push(...n); col.push(255,255,255,255);});
-  return {bPos:buf(gl.ARRAY_BUFFER,new Float32Array(pos)),bNor:buf(gl.ARRAY_BUFFER,new Float32Array(nor)),bCol:buf(gl.ARRAY_BUFFER,new Uint8Array(col)),bIdx:buf(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array([0,1,2,0,2,3])),count:6};
+/* cenário: fundo infinito = uma faixa só. Perfil: chão (y=0) vindo da frente, curva de raio CYC.r e parede reta em z=CYC.z.
+   Sem quina: a curva tem 10 gomos e o shader pinta tudo pela posição, então não aparece emenda. */
+const CYC={z:-4.5,r:1.2};
+function cycMesh(){
+  const pr=[[0,9],[0,CYC.z+CYC.r]];
+  for(let k=1;k<10;k++){const a=k/10*Math.PI/2; pr.push([CYC.r-Math.cos(a)*CYC.r,CYC.z+CYC.r-Math.sin(a)*CYC.r]);}
+  pr.push([CYC.r,CYC.z],[12,CYC.z]);
+  const pos=[], nor=[], col=[], idx=[];
+  pr.forEach(([y,z],k)=>{for(const x of [-12,12]){pos.push(x,y,z); nor.push(0,1,0); col.push(255,255,255,255);}
+    if(k) idx.push(2*k-2,2*k-1,2*k+1,2*k-2,2*k+1,2*k);});
+  return {bPos:buf(gl.ARRAY_BUFFER,new Float32Array(pos)),bNor:buf(gl.ARRAY_BUFFER,new Float32Array(nor)),bCol:buf(gl.ARRAY_BUFFER,new Uint8Array(col)),bIdx:buf(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(idx)),count:idx.length};
 }
-const ENV={floor:quadMesh([[-12,0,-4.5],[12,0,-4.5],[12,0,9],[-12,0,9]]),wall:quadMesh([[-12,0,-4.5],[12,0,-4.5],[12,12,-4.5],[-12,12,-4.5]])};
 function buf(target,data,usage){const b=gl.createBuffer();gl.bindBuffer(target,b);gl.bufferData(target,data,usage||gl.STATIC_DRAW);return b;}
+const ENV={cyc:cycMesh()};
 function bindAttrs(m){
   [[m.bPos,3,gl.FLOAT,false],[m.bNor,3,gl.FLOAT,false],[m.bCol,4,gl.UNSIGNED_BYTE,true]].forEach((a,i)=>{
     if(a[0]){gl.bindBuffer(gl.ARRAY_BUFFER,a[0]);gl.enableVertexAttribArray(i);gl.vertexAttribPointer(i,a[1],a[2],a[3],0,0);}
@@ -1451,10 +1440,18 @@ function bloodSpray(pm,n,power,dir,spread){
     BLOOD.drops.push({p:[w[0],w[1],w[2]],v:[d[0]*v+rnd(-.7,.7)*sp,rnd(.5,1.8)*k*sp,d[2]*v+rnd(-.5,.7)*sp],r:rnd(.012,.022)*(.85+.1*(power||1))});}
   while(BLOOD.drops.length>30) BLOOD.drops.shift();
 }
-function addStain(x,y,z,wall,r){
-  for(const s of BLOOD.stains){if(s.wall!==wall) continue; const d=Math.hypot(s.x-x,(wall?s.y-y:s.z-z));
+/* onde a gota encosta no fundo infinito: devolve [x,y,z,th] (th = inclinação da superfície: 0 chão, π/2 parede) ou null */
+function cycHit(p){
+  const zc=CYC.z+CYC.r;
+  if(p[2]>zc) return p[1]<=0?[p[0],0,p[2],0]:null;
+  if(p[1]>=CYC.r) return p[2]<=CYC.z?[p[0],p[1],CYC.z,Math.PI/2]:null;
+  const vy=p[1]-CYC.r, vz=p[2]-zc, l=Math.hypot(vy,vz); if(l<CYC.r) return null;
+  return [p[0],CYC.r+vy/l*CYC.r,zc+vz/l*CYC.r,Math.atan2(-vz,-vy)];
+}
+function addStain(x,y,z,th,r){
+  for(const s of BLOOD.stains){if(Math.abs(s.th-th)>.35) continue; const d=Math.hypot(s.x-x,s.y-y,s.z-z);
     if(d<(s.r+r)*.7){s.r=Math.min(.65,Math.sqrt(s.r*s.r+r*r*.5)); s.age=Math.min(s.age,1.5); s.fade=1; return;}}   /* cai em cima de outra: a poça cresce */
-  BLOOD.stains.push({x,y,z,wall,r,rot:rnd(0,6.28),k:Math.floor(rnd(0,4))%4,age:0,fade:1,sq:rnd(.75,1)});
+  BLOOD.stains.push({x,y,z,th,r,rot:rnd(0,6.28),k:Math.floor(rnd(0,4))%4,age:0,fade:1,sq:rnd(.75,1)});
   while(BLOOD.stains.length>70) BLOOD.stains.shift();
 }
 function bloodStep(dt){
@@ -1464,8 +1461,7 @@ function bloodStep(dt){
   for(let i=D.length-1;i>=0;i--){const b=D[i]; b.v[1]-=9.8*dt; b.v[0]*=1-dt*.4; b.v[2]*=1-dt*.4;
     b.p[0]+=b.v[0]*dt; b.p[1]+=b.v[1]*dt; b.p[2]+=b.v[2]*dt;
     if(bodyOn){const q=M4.pt(iv,b.p); if(inBody(q)){const R=b.r*rnd(4,5.5), run=rnd(.08,.2); for(let k=0;k<4;k++) BM.paint([q[0],q[1]-run*k/3,q[2]+.02*k],R*(1-.2*k),[.7,.06,.13]);   /* mancha + escorrido pra baixo */ D.splice(i,1); continue;}}   /* bateu no corpo: suja ele */
-    if(b.p[1]<=0){addStain(b.p[0],0,b.p[2],false,b.r*rnd(5.5,8)); D.splice(i,1);}
-    else if(b.p[2]<=-4.48){addStain(b.p[0],b.p[1],-4.5,true,b.r*rnd(3.5,5)); D.splice(i,1);}
+    const h=cycHit(b.p); if(h){addStain(h[0],h[1],h[2],h[3],b.r*(h[3]<.7?rnd(5.5,8):rnd(3.5,5))); D.splice(i,1);}
     else if(Math.abs(b.p[0])>12||b.p[2]>9) D.splice(i,1);}
   const St=BLOOD.stains;
   for(let i=St.length-1;i>=0;i--){const s=St[i]; s.age+=dt; if(s.age>70){s.fade-=dt/25; if(s.fade<=0) St.splice(i,1);}}
@@ -1477,7 +1473,9 @@ function bloodDraw(L){
     const M=new Float32Array([x[0]*b.r,x[1]*b.r,x[2]*b.r,0, y[0]*b.r*st,y[1]*b.r*st,y[2]*b.r*st,0, z[0]*b.r,z[1]*b.r,z[2]*b.r,0, b.p[0],b.p[1],b.p[2],1]);
     L.push([ball,M,0,.8,[.78,.05,.14],.55]);}
   for(const s of BLOOD.stains){const t=Math.min(1,s.age/30), c=[mix(.68,.32,t),mix(.04,.02,t),mix(.11,.06,t)], r=s.r*Math.max(0,s.fade);
-    const M=s.wall?M4.chain(M4.T(s.x,s.y,-4.48),M4.RX(Math.PI/2),M4.RY(s.rot),M4.S(r,1,r*s.sq)):M4.chain(M4.T(s.x,.018+BLOOD.stains.indexOf(s)*2e-4,s.z),M4.RY(s.rot),M4.S(r,1,r*s.sq));
+    /* desgruda um pouquinho da superfície (na curva, um pouco mais, pra borda da mancha plana não afundar) */
+    const ny=Math.cos(s.th), nz=Math.sin(s.th), off=.018+BLOOD.stains.indexOf(s)*2e-4+(s.th>.01&&s.th<1.56?r*r/(2*CYC.r):0);
+    const M=M4.chain(M4.T(s.x,s.y+ny*off,s.z+nz*off),M4.RX(s.th),M4.RY(s.rot),M4.S(r,1,r*s.sq));
     L.push([SPLATS[s.k],M,0,mix(.7,.3,t),c,null,1]);}
 }
 /* pingo que escorre pelo queixo e cai reto: sai de baixo do queixo e suja o peito/barriga */
@@ -2277,7 +2275,7 @@ function frame(now){
 
   gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   {gl.uniformMatrix4fv(U.uVP,false,VP); gl.uniform1f(U.uOutline,0);
-   gl.disable(gl.CULL_FACE); drawMesh(ENV.wall,M4.T(0,0,0),5,0); drawMesh(ENV.floor,M4.T(0,0,0),4,0);}
+   gl.disable(gl.CULL_FACE); drawMesh(ENV.cyc,M4.T(0,0,0),4,0);}
   gl.uniformMatrix4fv(U.uVP,false,VP); gl.uniform3fv(U.uCam,CAM); gl.uniform3fv(U.uInk,cur.ink);
   const C=cur, hc=C.hc, E=C.eye;
   /* lista do que desenhar: [malha, matriz, modo, brilho, tinta, espessura do contorno, sem contorno (1 = e desenha frente e verso; 2 = só sem contorno), só contorno] */
@@ -2285,10 +2283,6 @@ function frame(now){
   L.push([parts.ball,ballM(),1,.6]);
   L.push([parts.head,HEADM,2,.5]);
   bloodDraw(L);
-  /* cordas do ringue atrás dele (vermelha, branca, azul) e os postes dos cantos */
-  [[.62,[.85,.15,.18]],[1.12,[.95,.95,.95]],[1.62,[.18,.3,.75]]].forEach(([y,c])=>L.push([ball,M4.chain(M4.T(0,y,-2.75),M4.S(4.3,.05,.05)),0,.5,c,.6]));
-  for(const sx of [-1,1]){L.push([ball,M4.chain(M4.T(sx*4.3,.95,-2.75),M4.S(.11,1.05,.11)),0,.7,[.55,.56,.6],.7]);
-    L.push([ball,M4.chain(M4.T(sx*4.3,1.12,-2.62),M4.S(.16,.62,.1)),0,.4,sx<0?[.8,.15,.18]:[.18,.3,.75],.7]);}
   /* nariz de batata: bolota 3D rosadinha no meio da cara (acompanha a cabeça e aparece de perfil) */
   {const H=S.hurt||{}, nz=H.nose||0, bk=Math.min(1,(H.broke||0)*4), bd=(H.bend||1)*bk;   /* nariz não muda de tamanho: só fica vermelho, e quebrado entorta */
    /* quebrado: torto pro lado (gira e escorrega) e arroxeado */
@@ -2309,8 +2303,8 @@ function frame(now){
    const bb=H.bb||[0,0,0]; gl.uniform4f(U.uBB,bb[0],bb[1],bb[2],H.bbi||0);
    gl.uniform1f(U.uOutfit,OUTFIT); gl.uniform3fv(U.uSkinC,cur.skin); gl.uniform2f(U.uTie,(S.tie||0)*(S.tieDir||1)+.12+(RM?0:Math.sin(S.t*2.3)*.04+clamp((S.leanV?S.leanV[0]:0)*.6,-.3,.3)),0);
    {const B=new Float32Array(36), J9=[J.hea,J.che,J.pel,J.anL,J.anR,J.haL,J.haR,J.knL,J.knR];
-    J9.forEach((j,i)=>{const q=X[j]; if(!q) return; const hgt=Math.max(0,q[1]), r=Math.min(.95,(RAD[j]||.15)*(1.05+hgt*.25)+.05);   /* a lâmpada fica um pouco atrás: a sombra cai pra frente, onde dá pra ver */
-      B.set([q[0],q[2]+.25+hgt*.18,r*1.15,clamp(.9-hgt*.2,.25,.9)*(j===J.haL||j===J.haR?.6:1)],i*4);}); gl.uniform4fv(U.uSB,B);}
+    J9.forEach((j,i)=>{const q=X[j]; if(!q) return; const hgt=Math.max(0,q[1]), r=Math.min(1.1,(RAD[j]||.15)*(1.1+hgt*.35)+.08);   /* luz de cima, um pouco atrás: a sombra cai quase embaixo, e quanto mais alto, mais larga e fraca */
+      B.set([q[0],q[2]+.12+hgt*.08,r*1.2,clamp(.75-hgt*.18,.2,.75)*(j===J.haL||j===J.haR?.6:1)],i*4);}); gl.uniform4fv(U.uSB,B);}
    {const Mk=new Float32Array(24); (H.marks||[]).forEach((m,i)=>{Mk.set([m.p[0],m.p[1],m.p[2],m.k+m.a],i*4);}); gl.uniform4fv(U.uMk,Mk);}
    {const Cc=new Float32Array(16); (H.cuts||[]).forEach((c,i)=>{Cc.set([c.p[0],c.p[1],c.p[2],Math.max(.01,c.f)],i*4);}); gl.uniform4fv(U.uCut,Cc);}
    {const B=new Float32Array(24); (H.bru||[]).forEach((b,i)=>{B.set([b.p[0],b.p[1],b.p[2],b.a],i*4);}); gl.uniform4fv(U.uBru,B);}
