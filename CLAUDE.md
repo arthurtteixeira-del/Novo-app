@@ -23,8 +23,19 @@ xinga, chora e provoca. Cada golpe dá moedas, e com as moedas o jogador compra 
   passos de recuperação, queda, sentar e levantar. Arrastar fora do boneco, usar dois dedos ou a
   barra de baixo gira o boneco.
 - **Rosto**: olhos e bocas são ilustrações SVG desenhadas num atlas (textura) e pintadas na
-  cabeça pelo shader. As pupilas seguem o dedo. Expressões: calmo, irritado, bravo, furioso,
-  feliz, assustado, apanhando, zonzo, nocaute, deboche, triste, choro etc.
+  cabeça pelo shader. Olhos no estilo boneco de vinil colecionável: grandes, redondos, contorno
+  fino (`EK.W`), sobrancelha em gomo; no calmo ficam bem abertos e simpáticos, e as expressões vêm
+  da pálpebra que corta o olho e da sobrancelha. As pupilas (castanho quase preto, `EYE_PUP` dá o
+  tamanho de cada expressão: maior = mais simpático) seguem o dedo e têm dois pontos de brilho
+  pintados no shader, presos em `uPH`, que anda só metade do que a pupila anda (o reflexo quase não
+  sai do lugar). Pupila pequena (bravo, furioso) só tem o brilho pequeno. Expressões: calmo,
+  irritado, bravo, furioso, feliz, assustado, apanhando, zonzo, nocaute, deboche, triste, choro etc.
+- **Cabelo**: peça única, lisa e esculpida (capacete de brinquedo), castanha com a raiz mais escura:
+  uma casca rente à cabeça cortada na linha do cabelo (`hairLine`) e 6 mechas grossas e arredondadas
+  (`HAIR_LOCKS`: 2 no topete, 2 no alto, 2 atrás) que deitam sobre a cabeça e levantam a ponta para
+  cima e para trás. É um campo de distância (`hairSD`) virado malha pelo `meshSDF` (passo .07, cerca
+  de 7,7 mil triângulos: não diminua o passo, pesa no celular). O galo estufa o cabelo (`hairBumps`) e
+  o Taser estica o cabelo para cima.
 - **Comportamento**: humor (calmo/bravo, com 3 níveis de raiva), tristeza e choro em sequências
   longas de golpes, defesa com as mãos, guarda no lugar onde você insiste, gestos à toa (acenar,
   apontar, dedo do meio, sacudir o punho...).
@@ -69,8 +80,8 @@ Tudo fica dentro de um `<script>` com uma função que roda sozinha. Seções, n
    corpo (`NECK`, `PROP`) e `ballM()` (matriz do corpo-bolinha com o amassado).
 3. **malhador** — `meshSDF` transforma um campo de distância em malha (surface nets);
    `sphereMesh` faz a esfera usada em quase tudo (`ball`).
-4. **personagens** — `CHARS`: a ficha do boneco (cabeça, cores, acessórios, falas). Cabelo de
-   pirâmides (`hairGelMesh`) e parte raspada (`shavedMesh`).
+4. **personagens** — `CHARS`: a ficha do boneco (cabeça, cores, acessórios, falas). Cabelo
+   esculpido (`hairSD`, `HAIR_LOCKS`, `hairGelMesh`) e parte raspada (`shavedMesh`).
 5. **WebGL e shaders** — `VS`/`FS`, a lista de uniforms `U` e o cenário (`ENV`). O shader escolhe
    o que pintar por `uMode`: `0` peça comum · `.1` peça da mão (traço fino na borda) · `.25` cabelo raspado · `1` corpo (roupa, roxo na
    barriga) · `2` cabeça (rosto, olhos, boca, machucados) · `3` contorno de nanquim · `4` fundo infinito

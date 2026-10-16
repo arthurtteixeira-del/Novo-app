@@ -306,33 +306,40 @@ function sphereMesh(su,sv){
 const NOSE_Y=-.26;   /* altura do nariz (em relação ao centro da cabeça): bem acima da boca, mesmo quebrado */
 /* ---------- 4. personagens: cada um é uma ficha ----------
    cabeça: formas no espaço do modelo (centro da cabeça em hc); rosto: olhos e boca; acessórios; falas. */
-/* cabelo 20 "espetado com gel": a cabeça quadriculada como um tabuleiro (grade de cubo projetada na esfera, casas quase iguais)
-   e em cada casa uma pirâmide de base quadrada, todas do mesmo tamanho e altura. As bases encostam umas nas outras: sem área lisa.
-   Low-poly: 4 triângulos por pirâmide. Faces com vértices próprios (sombreado chapado); o contorno usa uma cópia com vértices
-   compartilhados (casca contínua). Coordenadas da cabeça (centro y=2.42, raio 1.12) */
+/* cabelo "capacete de vinil": uma peça só, lisa e esculpida (campo de distância → malha), como cabelo de boneco colecionável.
+   Uma casca rente à cabeça (a própria forma da cabeça um pouco inflada, cortada na linha do cabelo) e 6 mechas grossas e
+   arredondadas que saem dela e se curvam para cima e para trás: 2 no topete, 2 no alto, 2 atrás. As mechas se fundem na
+   casca com união suave (sem quina), mas deixam um sulco entre elas. Vértices compartilhados: sombreado liso, e o contorno
+   de nanquim é o normal das peças. Coordenadas da cabeça (centro y=2.42, raio 1.12) */
 function hairLine(az){const a=Math.abs(az); return a<1.1?.66:a<2.2?mix(.66,.32,sstep(1.1,1.7,a)):mix(.32,-.05,sstep(2.2,2.9,a));}
-function hairGelMesh(){
-  const HY=2.42, HR=1.12, NC=5, H=.23, ROOT=[.3,.17,.1], TIP=[.55,.33,.19], F={P:[],C:[],I:[]}, S={P:[],C:[],I:[]};
-  const vert=(m,p,c)=>{m.P.push(p[0],p[1]+HY,p[2]); m.C.push(c[0]*255,c[1]*255,c[2]*255,255); return m.P.length/3-1;};
-  const tri=(m,a,b,c,out)=>{const P=m.P,A=a*3,B=b*3,Cc=c*3, ux=P[B]-P[A],uy=P[B+1]-P[A+1],uz=P[B+2]-P[A+2],vx=P[Cc]-P[A],vy=P[Cc+1]-P[A+1],vz=P[Cc+2]-P[A+2];
-    const nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx; if(nx*out[0]+ny*out[1]+nz*out[2]<0) m.I.push(a,c,b); else m.I.push(a,b,c);};
-  /* 6 faces do cubo: [normal, eixo u, eixo v]; mapeamento equiangular deixa as casas do mesmo tamanho */
-  const FACES=[[[0,1,0],[1,0,0],[0,0,1]],[[0,0,1],[1,0,0],[0,1,0]],[[0,0,-1],[1,0,0],[0,1,0]],[[1,0,0],[0,0,1],[0,1,0]],[[-1,0,0],[0,0,1],[0,1,0]]];
-  const dir=(f,u,v)=>{const a=Math.tan(u*Math.PI/4), b=Math.tan(v*Math.PI/4); return norm3([f[0][0]+f[1][0]*a+f[2][0]*b,f[0][1]+f[1][1]*a+f[2][1]*b,f[0][2]+f[1][2]*a+f[2][2]*b]);};
-  const R0=HR+.02;
-  for(const f of FACES)for(let a=0;a<NC;a++)for(let b=0;b<NC;b++){
-    const u0=-1+2*a/NC, u1=-1+2*(a+1)/NC, v0=-1+2*b/NC, v1=-1+2*(b+1)/NC, c=dir(f,(u0+u1)/2,(v0+v1)/2);
-    const el=Math.asin(c[1]), az=Math.atan2(c[0],c[2]); if(el<hairLine(az)) continue;
-    const base=[dir(f,u0,v0),dir(f,u1,v0),dir(f,u1,v1),dir(f,u0,v1)].map(d=>[d[0]*R0,d[1]*R0,d[2]*R0]), tip=[c[0]*(R0+H),c[1]*(R0+H),c[2]*(R0+H)];
-    for(let m=0;m<4;m++){const A=base[m],B=base[(m+1)%4], out=[(A[0]+B[0])/2-c[0]*R0,(A[1]+B[1])/2-c[1]*R0,(A[2]+B[2])/2-c[2]*R0];
-      tri(F,vert(F,A,ROOT),vert(F,B,ROOT),vert(F,tip,TIP),out);}
-    const bi=base.map(p=>vert(S,p,ROOT)), ti=vert(S,tip,TIP);
-    for(let m=0;m<4;m++){const A=base[m],B=base[(m+1)%4]; tri(S,bi[m],bi[(m+1)%4],ti,[(A[0]+B[0])/2-c[0]*R0,(A[1]+B[1])/2-c[1]*R0,(A[2]+B[2])/2-c[2]*R0]);}
-  }
-  const pack=m=>({pos:new Float32Array(m.P),idx:new Uint16Array(m.I),col:new Uint8Array(m.C),nv:m.P.length/3});
-  return {mesh:pack(F),hull:pack(S)};
+/* mecha: tubo afinando que passa por 3 pontos (base → meio → ponta), raio r0 → r1 → r2 */
+function lockSD(x,y,z,P,R){let d=1e9;
+  for(let s=0;s<2;s++){const a=P[s], b=P[s+1], ux=b[0]-a[0], uy=b[1]-a[1], uz=b[2]-a[2], px=x-a[0], py=y-a[1], pz=z-a[2];
+    const h=clamp((px*ux+py*uy+pz*uz)/(ux*ux+uy*uy+uz*uz),0,1); d=Math.min(d,len3(px-ux*h,py-uy*h,pz-uz*h)-mix(R[s],R[s+1],h));}
+  return d;}
+/* cada mecha em ângulos na cabeça: [azimute, elevação, quanto sai da superfície] da base, do meio e da ponta.
+   Base e meio ficam deitados sobre a casca (só um gomo de relevo); a ponta levanta para cima e para trás */
+const HAIR_LOCKS=[1,-1].flatMap(s=>[
+  [[.38,.9,-.14],[.32,1.12,-.02],[.22,1.36,.24],.31],      /* topete, sobre a testa */
+  [[1.32,.5,-.12],[1.2,.9,-.01],[1.1,1.2,.26],.31],     /* lado, no alto da cabeça */
+  [[2.62,.26,-.12],[2.56,.66,-.02],[2.42,.96,.3],.3]       /* atrás, sobe pela nuca */
+].map(([b,m,t,r])=>{const P=q=>{const R=1.12+q[2], c=Math.cos(q[1]); return [s*Math.sin(q[0])*c*R,Math.sin(q[1])*R,Math.cos(q[0])*c*R];};
+  return {P:[P(b),P(m),P(t)],R:[r,r*.82,r*.58]};}));
+function hairSD(x,y,z){
+  const HY=2.42, ly=y-HY, r=len3(x,ly,z)||1e-6, el=Math.asin(clamp(ly/r,-1,1)), az=Math.atan2(x,z);
+  /* casca: a cabeça inflada, cortada (com borda arredondada) na linha do cabelo */
+  const shell=CHARS[0].sdHead(x,y,z)-.075, cut=(hairLine(az)-el)*r, k=.05, hh=clamp(.5-.5*(cut-shell)/k,0,1);
+  let d=mix(cut,shell,hh)+k*hh*(1-hh);   /* "máximo suave" das duas */
+  for(const L of HAIR_LOCKS) d=smin(d,lockSD(x,ly,z,L.P,L.R),.05);
+  return d;
 }
-/* parte raspada (máquina): faixa rente à pele que sai de baixo das pirâmides, desce até a orelha (costeleta na frente dela,
+function hairGelMesh(){
+  const ROOT=[.3,.17,.1], TIP=[.55,.33,.19];
+  /* raiz mais escura, pontas das mechas mais claras */
+  const col=(x,y,z)=>{const r=len3(x,y-2.42,z), t=clamp(sstep(1.16,1.6,r)*.75+sstep(.7,1.5,y-2.42)*.25,0,1); return [mix(ROOT[0],TIP[0],t),mix(ROOT[1],TIP[1],t),mix(ROOT[2],TIP[2],t)];};
+  return {mesh:meshSDF(hairSD,col,[-1.4,2.42-.25,-1.5],[1.4,2.42+1.6,1.4],.07)};
+}
+/* parte raspada (máquina): faixa rente à pele que sai de baixo do cabelo, desce até a orelha (costeleta na frente dela,
    contorno por cima e por trás) e termina na nuca com o pezinho quadrado. Cada vértice é projetado na superfície real da cabeça.
    Faixa contínua de uma costeleta à outra passando pela nuca; a borda de baixo segue shaveLow(az). */
 function shaveLow(az){const a=Math.abs(az);
@@ -404,7 +411,7 @@ void main(){
 const FS=`
 precision mediump float;
 uniform float uMode, uGloss, uUseTint;
-uniform vec4 uMCell, uECell, uPL, uEInj; uniform vec2 uEInj2; uniform vec3 uEyeDC; uniform vec2 uPR; uniform sampler2D uETex; uniform float uEOn; uniform sampler2D uMTex; uniform float uMOn, uMSz;
+uniform vec4 uMCell, uECell, uPL, uPH, uEInj; uniform vec2 uEInj2; uniform vec3 uEyeDC; uniform vec2 uPR; uniform sampler2D uETex; uniform float uEOn; uniform sampler2D uMTex; uniform float uMOn, uMSz;
 uniform vec3 uCam, uTint, uInk, uMouthC; uniform vec4 uHurt, uHurt2, uHurt3, uBB; uniform vec2 uRed, uInjSt; uniform vec4 uBru[6]; uniform float uOutfit; uniform vec4 uSB[9]; uniform vec4 uMk[6]; uniform vec2 uBurst, uTear; uniform vec4 uCut[4]; uniform vec3 uSkinC; uniform vec2 uTie;
 /* olhos grandes: o desenho dos olhos é ampliado (1.25x) e cada olho é afastado do meio (afastamento contínuo, sem emenda) */
 vec2 eyeSp(vec2 e){return vec2(sign(e.x)*max(abs(e.x)-.07,0.),e.y)/1.25;}   /* afasta cada olho sem esticar o desenho perto do meio */
@@ -620,11 +627,16 @@ void main(){
        float vein=(1.-smoothstep(.05,.13,abs(sin(an*5.+r*8.+sin(an*11.)*.7))))*smoothstep(.25,.85,r);
        base=mix(base,vec3(.3,0.,.03),white*bu*vein*.8);}}
      if(uPR.x>0.){
-       for(int i=0;i<2;i++){vec2 pc=i==0?uPL.xy:uPL.zw; float pe=length((e-pc)/uPR);
-         float pup=(1.-smoothstep(.9,1.,pe))*white;
-         base=mix(base,vec3(.06,.05,.08),pup);
-         float hl=1.-smoothstep(.5,.62,length((e-pc-vec2(-.32,.38)*uPR)/(uPR*.42)));
-         base=mix(base,vec3(1.),hl*pup);}
+       /* pupila de vinil: castanho quase preto, clareando embaixo; dois pontos de brilho (um grande em cima, um pequeno
+          embaixo do outro lado) presos em uPH, que acompanha o dedo só pela metade: o reflexo quase não sai do lugar.
+          Pupila pequena (bravo, furioso) fica só com o brilho pequeno */
+       float big=smoothstep(.06,.1,uPR.x);
+       for(int i=0;i<2;i++){vec2 pc=i==0?uPL.xy:uPL.zw, hc=i==0?uPH.xy:uPH.zw; float pe=length((e-pc)/uPR);
+         float pup=(1.-smoothstep(.9,1.,pe))*white, lo=clamp((pc.y-e.y)/uPR.y,0.,1.);
+         base=mix(base,mix(vec3(.08,.05,.06),vec3(.34,.19,.12),lo*lo*.85),pup);
+         float h1=1.-smoothstep(.8,1.,length((e-hc-vec2(-.36,.4)*uPR)/(uPR*.34)));
+         float h2=1.-smoothstep(.75,1.,length((e-hc-vec2(.42,-.44)*uPR)/(uPR*mix(.32,.15,big))));
+         base=mix(base,vec3(1.),max(h1*big,h2)*pup);}
      }
     }
     /* lágrima de sangue: do olho estourado escorre devagar um filete pela bochecha, com uma gota na ponta */
@@ -674,7 +686,7 @@ try{
 }catch(e){console.error(e);note('Não foi possível preparar o 3D neste aparelho.');return;}
 gl.useProgram(prog);
 const U={};
-['uMk','uSB','uCut','uBurst','uTear','uOutfit','uSkinC','uTie','uBru','uHurt','uHurt2','uHurt3','uBB','uRed','uInjSt','uM','uVP','uOutline','uAspect','uMode','uGloss','uUseTint','uCam','uTint','uInk','uMouthC','uMCell','uMTex','uMOn','uMSz','uECell','uEInj','uEInj2','uPL','uEyeDC','uPR','uETex','uEOn']
+['uMk','uSB','uCut','uBurst','uTear','uOutfit','uSkinC','uTie','uBru','uHurt','uHurt2','uHurt3','uBB','uRed','uInjSt','uM','uVP','uOutline','uAspect','uMode','uGloss','uUseTint','uCam','uTint','uInk','uMouthC','uMCell','uMTex','uMOn','uMSz','uECell','uEInj','uEInj2','uPL','uPH','uEyeDC','uPR','uETex','uEOn']
   .forEach(n=>U[n]=gl.getUniformLocation(prog,n));
 gl.enable(gl.DEPTH_TEST); gl.clearColor(0,0,0,0);
 /* cenário: fundo infinito = uma faixa só. Perfil: chão (y=0) vindo da frente, curva de raio CYC.r e parede reta em z=CYC.z.
@@ -1361,7 +1373,7 @@ function steam(){
 /* marcas que ficam na cabeça: hematoma (roxo onde bateu) e galo (calombo fixo). Machucado moderado e com limite:
    no máximo 6 hematomas (roxo até a metade da força) e 3 galos pequenos — armas futuras é que machucam feio */
 const BRU_MAX=6, BRU_A=.5, LUMP_MAX=3, LUMP_R=.11;
-/* galo debaixo do cabelo: o cabelo inteiro estufa naquele ponto (as pirâmides sobem junto, formando o calombo) */
+/* galo debaixo do cabelo: o cabelo inteiro estufa naquele ponto (a casca e as mechas sobem junto, formando o calombo) */
 let hairBumpKey='';
 function hairBumps(L){
   const key=L.filter(g=>g.hair).map(g=>g.r.toFixed(3)+g.n.map(v=>v.toFixed(2)).join()).join('|'); if(key===hairBumpKey||!parts) return; hairBumpKey=key;
@@ -1407,7 +1419,7 @@ function markHead(p,t,inEye){
       setTimeout(()=>say(pick(['Abriu! Tá sangrando!','Cortou minha cara!','Ai, isso vai precisar de ponto!','Sangue! Olha o sangue!']),false),200);}}
   /* galo: pancada forte na testa, nas têmporas, nos lados ou atrás (onde é pele: o cabelo esconderia) */
   const el=Math.asin(clamp(d[1],-1,1)), az=Math.atan2(d[0],d[2]);
-  /* em cima do cabelo o galo nasce "furando" o cabelo (por cima das pirâmides), como no desenho animado */
+  /* em cima do cabelo o galo nasce "furando" o cabelo (por cima da casca do cabelo), como no desenho animado */
   if(t.power>=2&&!onFeat&&p[1]>ey+.05){const G=H.lumps=H.lumps||[], hair=el>hairLine(az)-.04, rr=cur.headR+(hair?.17:0);
     const gp=[hc[0]+d[0]*rr,hc[1]+d[1]*rr,hc[2]+d[2]*rr]; let g=G.find(x=>dist3(x.p,gp)<.5);   /* galos bem separados */
     if(!g&&G.length<LUMP_MAX&&Math.random()<(t.power>3?.7:.4)){g={p:gp,n:d,r:.03,hair}; G.push(g);}
@@ -1734,76 +1746,81 @@ function loseTooth(sx,sy){
   return true;
 }
 
-/* ---------- olhos desenhados (mesmo estilo das bocas): branco, contorno de nanquim, pálpebra, sobrancelha que afina.
-   As pupilas NÃO estão no desenho: são pintadas por cima, só onde o olho é branco, e seguem o seu dedo. ---------- */
-const EK={INK:'#1F1B2E'};
+/* ---------- olhos desenhados, estilo boneco de vinil colecionável: olhos grandes e redondos, contorno fino de nanquim,
+   sobrancelha em gomo arredondado. As expressões vêm da pálpebra (que corta o olho) e da sobrancelha.
+   As pupilas NÃO estão no desenho: são pintadas por cima, só onde o olho é branco, e seguem o seu dedo (com dois pontos
+   de brilho pintados no shader). ---------- */
+const EK={INK:'#1F1B2E', W:2.4};   /* W = espessura do contorno do olho (fino) */
 const ePt=(s)=>100+s*33;   /* centro de cada olho no desenho (s=-1 esquerdo, +1 direito) */
 function eOval(c,cy,rx,ry){return `<ellipse cx="${c}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#FFFFFF"/>`;}
-function eLine(c,cy,rx,ry,w){return `<ellipse cx="${c}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="${EK.INK}" stroke-width="${w||4.5}"/>`;}
-function eBrow(x1,y1,x2,y2,cv,th){const mx=(x1+x2)/2, my=(y1+y2)/2; return `<path d="M${x1} ${y1} Q${mx} ${my-cv} ${x2} ${y2} Q${mx} ${my-cv+th*1.6} ${x1} ${y1} Z" fill="${EK.INK}" stroke="${EK.INK}" stroke-width="2" stroke-linejoin="round"/>`;}
+function eLine(c,cy,rx,ry,w){return `<ellipse cx="${c}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="${EK.INK}" stroke-width="${w||EK.W}"/>`;}
+/* sobrancelha: gomo que afina nas pontas, com cantos bem arredondados */
+function eBrow(x1,y1,x2,y2,cv,th){const mx=(x1+x2)/2, my=(y1+y2)/2; return `<path d="M${x1} ${y1} Q${mx} ${my-cv} ${x2} ${y2} Q${mx} ${my-cv+th*1.6} ${x1} ${y1} Z" fill="${EK.INK}" stroke="${EK.INK}" stroke-width="2.6" stroke-linejoin="round"/>`;}
 /* olho "cortado": a pálpebra não é desenhada — o próprio formato do olho é cortado por ela.
    Só o pedaço visível do olho tem branco e contorno (sem a linha do olho continuando por cima da pálpebra) */
 function eCut(id,c,cy,rx,ry,region,edge,w,inner){
   return `<defs><clipPath id="${id}r"><path d="${region}"/></clipPath><clipPath id="${id}o"><ellipse cx="${c}" cy="${cy}" rx="${rx+w/2}" ry="${ry+w/2}"/></clipPath></defs>`+
     `<g clip-path="url(#${id}r)"><ellipse cx="${c}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#FFFFFF"/>${inner||''}<ellipse cx="${c}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="${EK.INK}" stroke-width="${w}"/></g>`+
-    `<g clip-path="url(#${id}o)"><path d="${edge}" fill="none" stroke="${EK.INK}" stroke-width="${w}" stroke-linecap="round"/></g>`;
+    `<g clip-path="url(#${id}o)"><path d="${edge}" fill="none" stroke="${EK.INK}" stroke-width="${w*1.25}" stroke-linecap="round"/></g>`;
 }
 /* corte reto (yo no canto de fora, yi no de dentro); low = corte de baixo opcional */
 function eCutS(id,s,cy,rx,ry,yo,yi,low,w,inner){
   const c=ePt(s), xo=c+s*rx*1.4, xi=c-s*rx*1.4, b=low!=null?low:cy+ry+10;
-  return eCut(id,c,cy,rx,ry,`M${xo} ${yo} L${xi} ${yi} L${xi} ${b} L${xo} ${b} Z`,`M${xo} ${yo} L${xi} ${yi}`+(low!=null?` M${xo} ${low} L${xi} ${low}`:''),w||4.5,inner);
-}
-/* corte curvo (pálpebra relaxada) */
-function eCutC(id,s,cy,rx,ry,yl,arch,w,inner){
-  const c=ePt(s), x0=c-rx-4, x1=c+rx+4, b=cy+ry+10, q=`M${x0} ${yl+2} Q${c} ${yl-arch*2} ${x1} ${yl+2}`;
-  return eCut(id,c,cy,rx,ry,q+` L${x1} ${b} L${x0} ${b} Z`,q,w||4.5,inner);
+  return eCut(id,c,cy,rx,ry,`M${xo} ${yo} L${xi} ${yi} L${xi} ${b} L${xo} ${b} Z`,`M${xo} ${yo} L${xi} ${yi}`+(low!=null?` M${xo} ${low} L${xi} ${low}`:''),w||EK.W,inner);
 }
 /* olho roxo (o próprio olho, sem sobrancelha): 1 um pouco fechado → 3 quase fechado (fresta), 4 fechado e inchado, roxo quase preto */
 function eInj(id,s,st){
-  const c=ePt(s), cy=68, rx=[0,24,25,27,29,30][st], ry=[0,30,31,33,35,36][st], col=['','#A26CBD','#7A4596','#522569','#2A1036','#3A1748'][st];
-  if(st===4) return `<ellipse cx="${c}" cy="${cy+2}" rx="${rx}" ry="${ry}" fill="${col}" stroke="${EK.INK}" stroke-width="5"/>`+
-    `<path d="M${c-17} ${cy+8} Q${c} ${cy+16} ${c+17} ${cy+8}" fill="none" stroke="#6A3A84" stroke-width="3.4" stroke-linecap="round"/>`+
+  const c=ePt(s), cy=66, rx=[0,27,28,29,30,31][st], ry=[0,32,33,34,35,36][st], col=['','#A26CBD','#7A4596','#522569','#2A1036','#3A1748'][st];
+  if(st===4) return `<ellipse cx="${c}" cy="${cy+2}" rx="${rx}" ry="${ry}" fill="${col}" stroke="${EK.INK}" stroke-width="3"/>`+
+    `<path d="M${c-18} ${cy+8} Q${c} ${cy+16} ${c+18} ${cy+8}" fill="none" stroke="#6A3A84" stroke-width="3" stroke-linecap="round"/>`+
     `<ellipse cx="${c-9}" cy="${cy-14}" rx="8" ry="4.5" transform="rotate(-25 ${c-9} ${cy-14})" fill="#FFFFFF" opacity=".28"/>`;
   /* as duas pálpebras (de cima e de baixo) vão fechando e se encontram no meio do olho */
-  const yt=[0,54,61,66,0,57][st], yb=[0,86,78,72,0,82][st], bow=[0,3,4,4,0,4][st],   /* 5: estourado, inchado mas entreaberto (dá pra ver o vermelho) */ x0=c-rx-6, x1=c+rx+6;
+  const yt=[0,52,59,64,0,55][st], yb=[0,84,76,70,0,80][st], bow=[0,3,4,4,0,4][st],   /* 5: estourado, inchado mas entreaberto (dá pra ver o vermelho) */ x0=c-rx-6, x1=c+rx+6;
   const up=`M${x0} ${yt} Q${c} ${yt+bow*2} ${x1} ${yt}`, dn=`M${x0} ${yb} Q${c} ${yb-bow*2} ${x1} ${yb}`;
   return `<defs><clipPath id="${id}w"><path d="M${x0} ${yt} Q${c} ${yt+bow*2} ${x1} ${yt} L${x1} ${yb} Q${c} ${yb-bow*2} ${x0} ${yb} Z"/></clipPath><clipPath id="${id}o"><ellipse cx="${c}" cy="${cy}" rx="${rx}" ry="${ry}"/></clipPath></defs>`+
     `<ellipse cx="${c}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${col}"/>`+
     `<g clip-path="url(#${id}w)"><ellipse cx="${c}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#FFFFFF"/></g>`+
-    `<g clip-path="url(#${id}o)"><path d="${up} ${dn}" fill="none" stroke="${EK.INK}" stroke-width="4.5" stroke-linecap="round"/></g>`+
-    `<ellipse cx="${c}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="${EK.INK}" stroke-width="${4.5+st*.3}"/>`;
+    `<g clip-path="url(#${id}o)"><path d="${up} ${dn}" fill="none" stroke="${EK.INK}" stroke-width="3" stroke-linecap="round"/></g>`+
+    `<ellipse cx="${c}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="${EK.INK}" stroke-width="${2.6+st*.3}"/>`;
 }
-function eSpiral(c,cy){let d=''; for(let i=0;i<=60;i++){const a=i*.42, r=1.2+i*.33; d+=(i?'L':'M')+(c+Math.cos(a)*r).toFixed(1)+' '+(cy+Math.sin(a)*r).toFixed(1)+' ';} return `<path d="${d}" fill="none" stroke="${EK.INK}" stroke-width="3.2" stroke-linecap="round"/>`;}
+function eSpiral(c,cy){let d=''; for(let i=0;i<=60;i++){const a=i*.42, r=1.2+i*.36; d+=(i?'L':'M')+(c+Math.cos(a)*r).toFixed(1)+' '+(cy+Math.sin(a)*r).toFixed(1)+' ';} return `<path d="${d}" fill="none" stroke="${EK.INK}" stroke-width="2.8" stroke-linecap="round"/>`;}
 const EYE_NAMES=['calmo','irritado','bravo','furioso','feliz','assustado','apanhando','zonzo','nocaute','piscar','esforco','deboche','triste','choro','roxo1','roxo2','roxo3','roxo4','roxo5'];
-/* pupilas (no desenho): [x,y] de cada olho, raio x/y; null = sem pupila viva */
-const EYE_PUP={calmo:{y:76,rx:9.5,ry:11.5,dx:2},irritado:{y:74,rx:7.5,ry:9,dx:3},bravo:{y:78,rx:6.5,ry:7.5,dx:5},furioso:{y:78,rx:4,ry:4.5,dx:6},
-  assustado:{y:66,rx:4.5,ry:4.5,dx:0},triste:{y:80,rx:8.5,ry:10.5,dx:-1},esforco:{y:73,rx:6.5,ry:7,dx:3},deboche:{y:72,rx:7.5,ry:9,dx:2}};
+/* pupilas (no desenho): altura y, raio x/y, quanto vai para dentro (dx); null = sem pupila viva.
+   Pupila grande = cara simpática; quanto mais bravo, menor a pupila */
+const EYE_PUP={calmo:{y:69,rx:14,ry:17,dx:1},irritado:{y:71,rx:11,ry:13,dx:2},bravo:{y:72,rx:8,ry:9,dx:4},furioso:{y:74,rx:5,ry:5.5,dx:5},
+  assustado:{y:65,rx:5,ry:5,dx:0},triste:{y:74,rx:12.5,ry:15,dx:-1},esforco:{y:69,rx:8,ry:8.5,dx:3},deboche:{y:72,rx:11,ry:13,dx:2}};
 function eyeSVG(k){
   let o='';
+  const SW=4.6;   /* traço dos olhos fechados (^ ^, > <, X): mais fino que antes, ponta redonda */
+  const st=d=>`<path d="${d}" fill="none" stroke="${EK.INK}" stroke-width="${SW}" stroke-linecap="round" stroke-linejoin="round"/>`;
   for(const s of [-1,1]){
     const c=ePt(s), xo=c+s*18, xi=c-s*18, id='e'+(s<0?'l':'r');
     switch(k){
-      case 'calmo': o+=eCutC(id,s,68,23,28,63,3)+eBrow(c-16,32,c+15,30,6,6.5); break;
-      case 'irritado': o+=eCutS(id,s,66,24,31,48,57)+eBrow(xo,34,xi+s*-2,44,3,7); break;
-      case 'bravo': o+=eCutS(id,s,68,24,30,44,66)+eBrow(xo+s*4,33,xi+s*-6,56,-2,9); break;   /* sobrancelha quase encostando no olho */
-      case 'furioso': o+=eCutS(id,s,70,23,27,46,74,null,5)+eBrow(xo+s*6,34,xi+s*-8,63,-3,11)+`<path d="M${xi+s*-6} ${50} Q${xi+s*-12} ${44} ${xi+s*-8} ${38}" fill="none" stroke="${EK.INK}" stroke-width="3" stroke-linecap="round"/>`; break;
-      case 'feliz': o+=`<path d="M${c-19} 76 Q${c} 42 ${c+19} 76" fill="none" stroke="${EK.INK}" stroke-width="6.5" stroke-linecap="round"/>`+eBrow(c-16,24,c+16,24,7,6); break;
-      case 'assustado': o+=eOval(c,64,28,37)+eLine(c,64,28,37)+eBrow(xo+s*2,14,xi+s*-2,8,7,6); break;
-      case 'apanhando': o+=`<path d="M${xo} 50 L${xi+s*-4} 67 L${xo} 84" fill="none" stroke="${EK.INK}" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>`+eBrow(xo,30,xi,38,-2,7); break;
-      case 'zonzo': o+=eOval(c,66,24,31)+eLine(c,66,24,31)+eSpiral(c,67)+eBrow(c-15,24,c+15,28,4,5); break;
-      case 'nocaute': o+=`<path d="M${c-15} 52 L${c+15} 82 M${c+15} 52 L${c-15} 82" stroke="${EK.INK}" stroke-width="6.5" stroke-linecap="round"/>`+eBrow(c-15,28,c+15,30,3,5); break;
-      case 'piscar': o+=`<path d="M${c-22} 64 Q${c} 76 ${c+22} 64" fill="none" stroke="${EK.INK}" stroke-width="5.5" stroke-linecap="round"/>`+eBrow(c-16,28,c+16,28,6,6); break;
-      case 'esforco': o+=eCutS(id,s,68,24,30,58,62,84)+eBrow(xo,28,xi+s*-4,40,-2,8); break;
-      case 'triste': o+=eCutS(id,s,70,24,30,64,48,null,4.5,`<ellipse cx="${c}" cy="91" rx="16" ry="5.5" fill="#BFE6FF"/>`)+eBrow(xo+s*2,34,xi+s*-4,16,-3,7)
-        +`<path d="M${c+s*21} 92 q${s*7} 11 0 17 q${-s*7} -6 0 -17 Z" fill="#7CC8FF" stroke="${EK.INK}" stroke-width="2.6" stroke-linejoin="round"/>`; break;
+      /* calmo: olhão redondo e aberto, sobrancelha em arco suave lá em cima */
+      case 'calmo': o+=eOval(c,67,26,30)+eLine(c,67,26,30)+eBrow(c-15,29,c+15,27,5,4.5); break;
+      case 'irritado': o+=eCutS(id,s,67,26,30,46,54)+eBrow(xo,28,xi+s*-2,36,3,5.5); break;
+      /* bravo: pálpebra reta descendo de fora para dentro, sobrancelha grossa quase encostando */
+      case 'bravo': o+=eCutS(id,s,66,26,30,42,64)+eBrow(xo+s*4,30,xi+s*-6,52,-2,8); break;
+      case 'furioso': o+=eCutS(id,s,68,25,28,46,74)+eBrow(xo+s*6,32,xi+s*-8,62,-3,10)+`<path d="M${xi+s*-6} 48 Q${xi+s*-12} 42 ${xi+s*-8} 36" fill="none" stroke="${EK.INK}" stroke-width="2.6" stroke-linecap="round"/>`; break;
+      case 'feliz': o+=st(`M${c-20} 76 Q${c} 42 ${c+20} 76`)+eBrow(c-15,28,c+15,28,6,4.5); break;
+      case 'assustado': o+=eOval(c,65,28,33)+eLine(c,65,28,33)+eBrow(xo+s*2,24,xi+s*-2,20,6,4.5); break;
+      /* apanhando: > < de desenho animado, sem pupila */
+      case 'apanhando': o+=st(`M${xo} 48 L${xi+s*-4} 66 L${xo} 84`)+eBrow(xo,28,xi,36,-2,6); break;
+      case 'zonzo': o+=eOval(c,67,26,30)+eLine(c,67,26,30)+eSpiral(c,68)+eBrow(c-15,29,c+15,31,4,4.5); break;
+      case 'nocaute': o+=st(`M${c-15} 50 L${c+15} 82 M${c+15} 50 L${c-15} 82`)+eBrow(c-15,30,c+15,32,3,4.5); break;
+      case 'piscar': o+=st(`M${c-22} 66 Q${c} 78 ${c+22} 66`)+eBrow(c-15,29,c+15,29,5,4.5); break;
+      case 'esforco': o+=eCutS(id,s,66,26,30,56,60,82)+eBrow(xo,28,xi+s*-4,40,-2,7); break;
+      case 'triste': o+=eCutS(id,s,68,26,30,62,46,null,null,`<ellipse cx="${c}" cy="${92}" rx="17" ry="5.5" fill="#BFE6FF"/>`)+eBrow(xo+s*2,32,xi+s*-4,14,-3,6)
+        +`<path d="M${c+s*22} 92 q${s*7} 11 0 17 q${-s*7} -6 0 -17 Z" fill="#7CC8FF" stroke="${EK.INK}" stroke-width="2.2" stroke-linejoin="round"/>`; break;
       case 'roxo1': o+=eInj(id,s,1); break;
       case 'roxo2': o+=eInj(id,s,2); break;
       case 'roxo3': o+=eInj(id,s,3); break;
       case 'roxo4': o+=eInj(id,s,4); break;
       case 'roxo5': o+=eInj(id,s,5); break;
-      case 'choro': o+=`<path d="M${c-8} 70 C${c-12} 92 ${c-13} 108 ${c-10} 122 L${c+10} 122 C${c+13} 108 ${c+12} 92 ${c+8} 70 Z" fill="#7CC8FF" stroke="${EK.INK}" stroke-width="3" stroke-linejoin="round"/>`
-        +`<path d="M${c-21} 72 Q${c} 50 ${c+21} 72" fill="none" stroke="${EK.INK}" stroke-width="6.5" stroke-linecap="round"/>`+eBrow(xo+s*2,36,xi+s*-4,14,-3,7); break;
-      case 'deboche': o+=(s<0?eCutS(id,s,66,24,31,60,58):eOval(c,66,24,31)+eLine(c,66,24,31))+(s<0?eBrow(c-17,38,c+15,40,2,7):eBrow(c-16,14,c+16,22,9,6)); break;
+      case 'choro': o+=`<path d="M${c-8} 70 C${c-12} 92 ${c-13} 108 ${c-10} 122 L${c+10} 122 C${c+13} 108 ${c+12} 92 ${c+8} 70 Z" fill="#7CC8FF" stroke="${EK.INK}" stroke-width="2.4" stroke-linejoin="round"/>`
+        +st(`M${c-21} 72 Q${c} 48 ${c+21} 72`)+eBrow(xo+s*2,34,xi+s*-4,14,-3,6); break;
+      /* deboche: um olho meio fechado, o outro aberto com a sobrancelha lá em cima */
+      case 'deboche': o+=(s<0?eCutS(id,s,67,26,30,60,58):eOval(c,67,26,30)+eLine(c,67,26,30))+(s<0?eBrow(c-17,40,c+15,42,2,6):eBrow(c-16,24,c+16,28,8,5)); break;
     }
   }
   return o;
@@ -2425,12 +2442,12 @@ function frame(now){
    /* pupilas. No olho roxo (entreaberto) a pupila vai pro meio da fresta que sobrou — senão ela fica escondida atrás da pálpebra
       roxa (ou nem existe, nas expressões de olho fechado) */
    {const H=S.hurt||{}, st=b=>b<.25?0:b<.5?1:b<.7?2:b<.88?3:4, inj={'-1':H.xl?5:st(H.bl||0),'1':H.xr?5:st(H.br||0)}, R=P||EYE_PUP.calmo;
-    const gx=clamp(face.gx,-.4,.4)*16, gy=clamp(face.gy,-.35,.35)*16, slitY=[0,70,69.5,69,0,69.5];
+    const gx=clamp(face.gx,-.4,.4)*16, gy=clamp(face.gy,-.35,.35)*16, slitY=[0,68,67.5,67,0,67.5];
     const pp=s=>{const j=inj[s]; if(j>=1&&j<=3||j===5) return [(ePt(s)+gx*.6-100)*k,(60-(slitY[j]-gy*.3))*k];
       if(S.nut&&P) return [(ePt(s)-s*17-100)*k,(60-(P.y+4))*k];   /* levou no saco: vesgo */
       if(!P) return [-99,-99]; return [(ePt(s)-s*P.dx+gx-100)*k,(60-(P.y-gy))*k];};
-    const a=pp(-1), b=pp(1);
-    if(P||(inj['-1']>=1&&inj['-1']<=3)||(inj['1']>=1&&inj['1']<=3)||inj['-1']===5||inj['1']===5){gl.uniform4f(U.uPL,a[0],a[1],b[0],b[1]); gl.uniform2f(U.uPR,R.rx*k,R.ry*k);}
+    const a=pp(-1), b=pp(1), hk=.55*k;   /* brilho: volta pela metade o que a pupila andou atrás do dedo */
+    if(P||(inj['-1']>=1&&inj['-1']<=3)||(inj['1']>=1&&inj['1']<=3)||inj['-1']===5||inj['1']===5){gl.uniform4f(U.uPL,a[0],a[1],b[0],b[1]); gl.uniform4f(U.uPH,a[0]-gx*hk,a[1]-gy*hk,b[0]-gx*hk,b[1]-gy*hk); gl.uniform2f(U.uPR,R.rx*k,R.ry*k);}
     else gl.uniform2f(U.uPR,0,0);}}
   L.forEach(d=>{if(d[7]) return; if(d[6]===1) gl.disable(gl.CULL_FACE); drawMesh(d[0],d[1],d[2],d[3],d[4]); if(d[6]===1) gl.enable(gl.CULL_FACE);});
 
