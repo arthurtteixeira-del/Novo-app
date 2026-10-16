@@ -50,7 +50,7 @@ Tudo fica dentro de um `<script>` com uma função que roda sozinha. Seções, n
 4. **personagens** — `CHARS`: a ficha do boneco (cabeça, cores, acessórios, falas). Cabelo de
    pirâmides (`hairGelMesh`) e parte raspada (`shavedMesh`).
 5. **WebGL e shaders** — `VS`/`FS`, a lista de uniforms `U` e o cenário (`ENV`). O shader escolhe
-   o que pintar por `uMode`: `0` peça comum · `.25` cabelo raspado · `1` corpo (roupa, roxo na
+   o que pintar por `uMode`: `0` peça comum · `.1` peça da mão (traço fino na borda) · `.25` cabelo raspado · `1` corpo (roupa, roxo na
    barriga) · `2` cabeça (rosto, olhos, boca, machucados) · `3` contorno de nanquim · `4` chão ·
    `5` parede · `6` peça com contorno desenhado na borda (nariz, orelhas).
 6. **malhas** — `Clay` (malha que guarda caixas para o toque, pinta sangue e muda de cor) e
@@ -59,9 +59,10 @@ Tudo fica dentro de um `<script>` com uma função que roda sozinha. Seções, n
    `knockDown`, `physics`, gestos à toa (`idleActs`, `provoke`).
 8. **estado e rosto** — estado do jogo `S`, machucados (`hurtHit`, `markHead`), sangue 3D
    (`BLOOD`) e `updateFace` (escolhe expressão de olho `S.eyeK` e de boca `S.mouthK`).
-9. **efeitos, som e falas** — partículas SVG (`part`, `ono`, `stars`), atlas das bocas, dos olhos
-   e das mãos (`buildMouths`, `buildEyes`, `buildHands`), figurinhas das mãos
-   (`drawHandSprites`), sons sintetizados (`SFX`) e balão de fala (`say`).
+9. **efeitos, som e falas** — partículas SVG (`part`, `ono`, `stars`), atlas das bocas e dos olhos
+   (`buildMouths`, `buildEyes`), mãos 3D de vinil (`HAND3`: palma e gomo de dedo, as mesmas malhas
+   nas duas mãos; poses em `HPOSE`, escolhidas por `handPose` e montadas por `handParts`, que também
+   guarda onde a mão está na tela em `a.hScr`), sons sintetizados (`SFX`) e balão de fala (`say`).
 10. **ferramentas e toque** — `TOOLS`, moedas salvas, `pickAt` (raio contra as malhas), `armAt`
     (toque nas mãos), `strike` (o golpe e todas as reações), gestos de toque e a barra de giro.
 11. **laço** — câmera (`updCam`), `resize`, `drawMesh` e `frame` (física → rosto → desenho).
