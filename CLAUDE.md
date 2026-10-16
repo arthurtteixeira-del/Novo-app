@@ -34,8 +34,9 @@ xinga, chora e provoca. Cada golpe dá moedas, e com as moedas o jogador compra 
   sangue em gotas 3D que mancha o chão, a parede e o corpo.
 - **Ferramentas**: Cutucão, Tapa e Soco de graça; na loja, Chinelo, Taco e Taser.
 - **Personalização**: cor da pele (paleta ou qualquer cor) e roupa (terno ou camisola de paciente).
-- **Cenário**: academia de boxe à noite (lona do ringue, cordas, parede de tijolo com cartazes),
-  tudo desenhado no shader.
+- **Cenário**: estúdio de foto de brinquedo de vinil. Fundo infinito verde-menta claro (chão e
+  parede emendados numa curva, sem quina), luz suave vinda de cima, pedestal redondo baixo pintado
+  sob os pés e sombra macia do boneco que acompanha o corpo. Tudo desenhado no shader, sem textura.
 
 ## Como o código está organizado
 
@@ -51,14 +52,18 @@ Tudo fica dentro de um `<script>` com uma função que roda sozinha. Seções, n
    pirâmides (`hairGelMesh`) e parte raspada (`shavedMesh`).
 5. **WebGL e shaders** — `VS`/`FS`, a lista de uniforms `U` e o cenário (`ENV`). O shader escolhe
    o que pintar por `uMode`: `0` peça comum · `.1` peça da mão (traço fino na borda) · `.25` cabelo raspado · `1` corpo (roupa, roxo na
-   barriga) · `2` cabeça (rosto, olhos, boca, machucados) · `3` contorno de nanquim · `4` chão ·
-   `5` parede · `6` peça com contorno desenhado na borda (nariz, orelhas).
+   barriga) · `2` cabeça (rosto, olhos, boca, machucados) · `3` contorno de nanquim · `4` fundo infinito
+   (chão + curva + parede, pedestal e sombra) · `6` peça com contorno desenhado na borda (nariz, orelhas).
+   O `5` (parede antiga) não é mais usado.
+   O fundo infinito é uma malha só (`cycMesh`, em `ENV.cyc`): chão em y=0, curva de raio `CYC.r` e parede
+   reta em z=`CYC.z`. A sombra vem dos borrões `uSB` (9 partes do corpo), calculados no `frame`.
 6. **malhas** — `Clay` (malha que guarda caixas para o toque, pinta sangue e muda de cor) e
    `buildChar` (monta corpo-bolinha, cabeça e acessórios).
 7. **corpo ativo** — esqueleto (`J`, `BONES`, `X`/`Q`), poses, `solve`, equilíbrio, passos,
    `knockDown`, `physics`, gestos à toa (`idleActs`, `provoke`).
 8. **estado e rosto** — estado do jogo `S`, machucados (`hurtHit`, `markHead`), sangue 3D
-   (`BLOOD`) e `updateFace` (escolhe expressão de olho `S.eyeK` e de boca `S.mouthK`).
+   (`BLOOD`; `cycHit` acha onde a gota bate no chão, na curva ou na parede e a mancha deita
+   naquela inclinação) e `updateFace` (escolhe expressão de olho `S.eyeK` e de boca `S.mouthK`).
 9. **efeitos, som e falas** — partículas SVG (`part`, `ono`, `stars`), atlas das bocas e dos olhos
    (`buildMouths`, `buildEyes`), mãos 3D de vinil (`HAND3`: palma e gomo de dedo, as mesmas malhas
    nas duas mãos; poses em `HPOSE`, escolhidas por `handPose` e montadas por `handParts`, que também
