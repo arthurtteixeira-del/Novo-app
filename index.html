@@ -651,6 +651,8 @@ void main(){
   vec3 col=toon(base,N,V,ao,gloss);
   /* nariz: contorno de nanquim desenhado na borda (a casca de contorno ficaria escondida dentro da cabeça) */
   if(uMode>5.5) col=mix(col,uInk,1.-smoothstep(.3,.42,abs(dot(N,V))));
+  /* mãos (modo .1): traço fino na borda de cada peça, para cada dedo aparecer mesmo por cima do outro */
+  if(uMode>.05&&uMode<.15) col=mix(col,uInk,1.-smoothstep(.2,.3,abs(dot(N,V))));
   gl_FragColor=vec4(col,1.);
 }`;
 function shader(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);
@@ -1796,145 +1798,43 @@ function buildEyes(){
   });
 }
 
-/* ---------- mãos desenhadas v3: luva de desenho animado (3 dedos + polegar).
-   Definição vem da SILHUETA: peças de uma mesma camada se fundem (filtro "goo" = cantos arredondados
-   entre dedo e palma, sem emenda), dedos vizinhos ficam com uma fresta que vira traço de nanquim,
-   e peças que passam POR CIMA (polegar, dedos enrolados) são uma camada nova com contorno próprio.
-   Contorno grosso igual ao do corpo, sombra em lua minguante embaixo/direita, brilho em cima/esquerda.
-   Mão direita, dedos para cima, viewBox 120×140, pulso embaixo. v='c' costas, v='p' palma. ---------- */
-const HK={INK:'#1F1B2E',SKIN:'#F2F0F8',SH:'#C3BEDA',CUP:'#D9D5EA'};
-let _hid=0;
-const HO=5.6;   /* meia-espessura do contorno */
-const hC=(pts,r)=>({t:'c',pts,r});            /* cápsula / salsicha por uma linha de pontos */
-const hE=(cx,cy,rx,ry,a)=>({t:'e',cx,cy,rx,ry,a:a||0});
-/* dedo: base (x,y), comprimento, raio, ângulo (graus, 0 = pra cima), dobra opcional da ponta */
-function hF(x,y,len,r,ang,bend,k){
-  const d=a=>[Math.sin(a*Math.PI/180),-Math.cos(a*Math.PI/180)], kk=k||.58, u=d(ang), p1=[x+u[0]*len*kk,y+u[1]*len*kk];
-  const v=d(ang+(bend||0)), p2=[p1[0]+v[0]*len*(1-kk),p1[1]+v[1]*len*(1-kk)];
-  const c=hC([[x,y],p1,p2],r); c.tip=true; return c;
+/* ---------- mãos 3D de vinil: luva de desenho animado (palma, 3 dedos grossos e um polegar).
+   Poucas malhas, as mesmas para as duas mãos: a palma (campo de distância), um gomo de dedo (cápsula) e o punho da luva
+   (a bolinha `ball` achatada). Cada dedo e o polegar são 2 gomos. Tudo entra na lista de desenho `L` como as outras peças:
+   mesmo sombreado, brilho de vinil e contorno de nanquim do resto do boneco.
+   Espaço da mão: y = para onde os dedos apontam, z = para onde a palma olha, x = lado do polegar. Origem = ponto da mão
+   no esqueleto (o pulso, onde fica o punho da luva). Medidas já em unidades do mundo. ---------- */
+function capsuleMesh(r,len,su,sh){
+  /* cápsula em pé no eixo y, de 0 a len: anéis do hemisfério de baixo e depois os do de cima */
+  const P=[],N=[],I=[],rows=[];
+  for(let j=0;j<=sh;j++){const a=-Math.PI/2+j/sh*Math.PI/2; rows.push([Math.sin(a),Math.cos(a),0]);}
+  for(let j=0;j<=sh;j++){const a=j/sh*Math.PI/2; rows.push([Math.sin(a),Math.cos(a),len]);}
+  rows.forEach(([ny,rr,oy])=>{for(let i=0;i<=su;i++){const ph=i/su*Math.PI*2, nx=rr*Math.sin(ph), nz=rr*Math.cos(ph); P.push(nx*r,ny*r+oy,nz*r); N.push(nx,ny,nz);}});
+  for(let j=0;j<rows.length-1;j++)for(let i=0;i<su;i++){const a=j*(su+1)+i,b=a+su+1; I.push(a,a+1,b,a+1,b+1,b);}
+  return {bPos:buf(gl.ARRAY_BUFFER,new Float32Array(P)),bNor:buf(gl.ARRAY_BUFFER,new Float32Array(N)),bIdx:buf(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(I)),count:I.length};
 }
-function hShape(p,fill,grow){
-  if(p.t==='e') return `<ellipse cx="${p.cx}" cy="${p.cy}" rx="${p.rx+grow}" ry="${p.ry+grow}"${p.a?` transform="rotate(${p.a} ${p.cx} ${p.cy})"`:''} fill="${fill}"/>`;
-  const e=p.pts[p.pts.length-1], tip=p.tip?`<circle cx="${e[0].toFixed(1)}" cy="${e[1].toFixed(1)}" r="${(p.r*1.08+grow).toFixed(1)}" fill="${fill}"/>`:'';
-  return `<path d="M${p.pts.map(q=>q[0].toFixed(1)+' '+q[1].toFixed(1)).join(' L')}" fill="none" stroke="${fill}" stroke-width="${(2*(p.r+grow)).toFixed(1)}" stroke-linecap="round" stroke-linejoin="round"/>`+tip;
-}
-/* uma camada: lista de peças fundidas; extra = desenhos dentro (cavidade da palma, brilho, vincos) */
-function hLayer(parts,o){
-  o=o||{}; const g='hg'+(_hid++), m='hm'+(_hid++), blur=o.blur||2.2;
-  const all=(fill,grow)=>parts.map(p=>hShape(p,fill,grow)).join('');
-  return `<defs><filter id="${g}" filterUnits="userSpaceOnUse" x="-40" y="-40" width="200" height="220" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${blur}"/><feColorMatrix values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 24 -11"/></filter>`+
-    `<mask id="${m}" maskUnits="userSpaceOnUse" x="-40" y="-40" width="200" height="220"><g filter="url(#${g})">${all('#FFFFFF',0)}</g></mask></defs>`+
-    `<g filter="url(#${g})">${all(HK.INK,HO)}</g>`+
-    `<g mask="url(#${m})"><rect x="-40" y="-40" width="200" height="220" fill="${HK.SH}"/><g filter="url(#${g})" transform="translate(-3.6 -4.4)">${all(HK.SKIN,0)}</g>${o.inner||''}</g>`;
-}
-const hInk=(d,w)=>`<path d="${d}" fill="none" stroke="${HK.INK}" stroke-width="${w||4.2}" stroke-linecap="round" stroke-linejoin="round"/>`;
-const hShine=(cx,cy,rx,ry,a)=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" transform="rotate(${a||-30} ${cx} ${cy})" fill="#FFFFFF"/>`;
-const hCupIn=(cx,cy,rx,ry)=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${HK.CUP}"/><ellipse cx="${cx+2}" cy="${cy+3}" rx="${rx*.8}" ry="${ry*.7}" fill="${HK.SH}" opacity=".55"/>`;
-/* brilho na ponta de cada dedo (volume, "redondinho") */
-function hTipShine(parts){
-  return parts.filter(p=>p.tip).map(p=>{const e=p.pts[p.pts.length-1], cx=e[0]-p.r*.36, cy=e[1]-p.r*.3;
-    return `<ellipse cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" rx="${(p.r*.3).toFixed(1)}" ry="${(p.r*.2).toFixed(1)}" transform="rotate(-40 ${cx.toFixed(1)} ${cy.toFixed(1)})" fill="#FFFFFF" opacity=".9"/>`;}).join('');
-}
-/* mão = palma + dedos fundidos; o polegar é peça separada com contorno próprio:
-   de costas ele fica ATRÁS da palma, de palma ele fica NA FRENTE — assim nunca vira um calombo grudado */
-function hHand(v,thumb,fingers,inner){
-  const back=hLayer([thumb],{inner:hTipShine([thumb])}), main=hLayer([PALM(),...fingers],{inner:(inner||'')+hTipShine(fingers)});
-  return hCuff()+(v==='c'?back+main:main+back);
-}
-const hCuff=()=>hLayer([hE(60,121,25,10.5)],{inner:hInk('M40 118 Q60 125 80 118',3)});
-const PALM=()=>hE(60,87,31,30);
-
-function hRelax(v){
-  const s=v==='c'?1:-1;
-  return hHand(v, hF(60-s*27,101,23,10.4,-s*40,s*20,.5),
-    [hF(36.5,72,24,10.6,-12,7,.5), hF(60,66,28,11,-1,3,.55), hF(83.5,72,23,10.6,12,-7,.5)],
-    v==='p'?hCupIn(60,92,15,13):hShine(46,84,7,4.5));
-}
-function hOpen(v){
-  const s=v==='c'?1:-1;
-  return hHand(v, hF(60-s*27,96,26,10.6,-s*64,s*8),
-    [hF(37,71,30,10.8,-25,4), hF(60,64,35,11.2,0,0), hF(83,71,29,10.8,25,-4)],
-    v==='p'?hCupIn(60,92,16,14):hShine(46,82,7,4.5));
-}
-function hClaw(v){
-  const s=v==='c'?1:-1;
-  return hHand(v, hF(60-s*27,96,26,10.4,-s*70,s*32,.55),
-    [hF(36,71,31,10.6,-30,34,.55), hF(60,64,35,11,0,0), hF(84,71,30,10.6,30,-34,.55)],
-    v==='p'?hCupIn(60,92,15,13):hShine(46,82,7,4.5));
-}
-function hCup(v){
-  const s=v==='c'?1:-1;
-  return hHand(v, hF(60-s*27,99,23,10.6,-s*30,s*18),
-    [hF(38,70,26,10.8,-7,-s*14), hF(60.5,65,30,11.2,0,-s*14), hF(83,70,25,10.8,7,-s*14)],
-    v==='p'?hCupIn(60,92,15,13):hShine(46,82,7,4.5));
-}
-/* punho. up: 'ind' indicador, 'mid' dedo do meio, 'thumb' polegar */
-function hFist(v,up){
-  const s=v==='c'?1:-1;
-  const knx=[60-s*20,60,60+s*20];                 /* nós: indicador, meio, anelar (vista de costas) */
-  const raised=up==='ind'?0:up==='mid'?1:-1;
-  let o=hCuff();
-  if(v==='c'){
-    const parts=[hE(60,91,31,26)];   /* punho de costas: três nós iguais em fila, borda de cima ondulada */
-    knx.forEach((x,i)=>{ if(i===raised) parts.push(hF(x*.95+3,74,46+(i===1?4:0),11,-s*(i===0?4:0),0)); else parts.push(hE(x*.95+3,66,10.6,9)); });
-    if(up==='thumb'){const th=hF(60-s*29,84,34,12,-s*6,s*8); o+=hLayer([th],{inner:hTipShine([th])});}   /* joinha: polegar atrás do punho, com contorno próprio */   /* de costas o polegar fica enrolado na frente dos dedos: não aparece, punho limpo e redondo */
-    o+=hLayer(parts,{inner:hShine(60-s*12,84,8,5,-s*20)+hTipShine(parts)});
-  } else {
-    /* palma: dedos enrolados (rolinhos) por cima da palma, polegar atravessando */
-    const back=[hE(60,86,31,28)];
-    if(raised>=0) back.push(hF(knx[raised],72,48+(raised===1?4:0),11,0,0));
-    if(up==='thumb') back.push(hF(60-s*30,82,32,12,-s*6,s*8));
-    o+=hLayer(back,{inner:hCupIn(60,94,14,10)+hTipShine(back)});
-    [2,1,0].forEach(i=>{ if(i===raised) return; o+=hLayer([hC([[knx[i],70],[knx[i],82]],11.2)],{blur:1.2}); });
-    if(up!=='thumb') o+=hLayer([hC([[60-s*31,100],[60-s*8,92],[60+s*10,90]],10.8)],{blur:1.2});
-  }
-  return o;
-}
-const HAND_POSES=['relax','aberta','punho','apontar','dedo','joinha','garra','concha'];
-/* tudo encolhido em volta do punho para o polegar aberto não sair do quadro (no jogo a figurinha é maior na mesma proporção) */
-const HSC=.86;
-function handSVG(pose,v){return `<g transform="translate(60 121) scale(${HSC}) translate(-60 -121)">${handSVG0(pose,v)}</g>`;}
-function handSVG0(pose,v){
-  switch(pose){
-    case 'relax': return hRelax(v);
-    case 'aberta': return hOpen(v);
-    case 'punho': return hFist(v);
-    case 'apontar': return hFist(v,'ind');
-    case 'dedo': return hFist(v,'mid');
-    case 'joinha': return hFist(v,'thumb');
-    case 'garra': return hClaw(v);
-    case 'concha': return hCup(v);
-  }
-  return '';
-}
-/* atlas das mãos: 8 poses × (costas, palma) = 16 células de 512 */
-let handTex=null, handReady=false;
-function buildHands(){
-  const cv2=document.createElement('canvas'); cv2.width=2048; cv2.height=2048; const g=cv2.getContext('2d'); const jobs=[];
-  HAND_POSES.forEach((p,pi)=>['c','p'].forEach((v,vi)=>{const i=pi*2+vi; jobs.push(new Promise(res=>{
-    const img=new Image(); img.onload=()=>{g.drawImage(img,(i%4)*512+36,Math.floor(i/4)*512,439,512); res();}; img.onerror=()=>res();
-    img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 140" width="439" height="512">'+handSVG(p,v)+'</svg>');}));}));
-  Promise.all(jobs).then(()=>{
-    handTex=handTex||gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,handTex);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cv2); gl.generateMipmap(gl.TEXTURE_2D);
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-    handReady=true;
-  });
-}
-/* figurinhas: um programa pequeno que desenha quadros texturizados sempre virados para a câmera */
-const SPP=(()=>{
-  const p=gl.createProgram();
-  gl.attachShader(p,shader(gl.VERTEX_SHADER,'attribute vec3 aPos; attribute vec2 aUV; attribute vec3 aC; attribute float aH; uniform mat4 uVP; varying vec2 vUV; varying float vH; void main(){vUV=aUV; vH=aH; gl_Position=uVP*vec4(aPos,1.); vec4 c=uVP*vec4(aC,1.); gl_Position.z=c.z/c.w*gl_Position.w;}'));
-  gl.attachShader(p,shader(gl.FRAGMENT_SHADER,'precision mediump float; uniform sampler2D uTex; varying vec2 vUV; varying float vH; void main(){vec4 t=texture2D(uTex,vUV); if(t.a<.02) discard;'+
-    /* mão machucada: a pele (partes claras do desenho) vai ficando avermelhada aos poucos; o traço preto fica igual */
-    'if(vH>.01){vec3 c=t.rgb/max(t.a,.001); float sk=smoothstep(.17,.3,dot(c,vec3(.33)));'+
-    'c=mix(c,c*vec3(1.,.7,.72),sk*clamp(vH,0.,1.15)*.8); c=mix(c,c*vec3(.66,.48,.84),sk*smoothstep(1.,2.,vH)*.95); t.rgb=c*t.a;} gl_FragColor=t;}'));
-  gl.bindAttribLocation(p,0,'aPos'); gl.bindAttribLocation(p,1,'aUV'); gl.bindAttribLocation(p,2,'aC'); gl.bindAttribLocation(p,3,'aH'); gl.linkProgram(p);
-  return {p:p,uVP:gl.getUniformLocation(p,'uVP'),uTex:gl.getUniformLocation(p,'uTex'),buf:gl.createBuffer()};
-})();
-/* qual desenho cada mão usa */
-function spritePose(a){
+const HSEG=.1, HFR=.08;   /* gomo do dedo: comprimento (de centro a centro das pontas) e raio */
+const HAND3={
+  /* palma de luva: almofada redonda, mais estreita no pulso; simétrica (serve para as duas mãos sem espelhar) */
+  palm:new Clay(meshSDF((x,y,z)=>smin(ell(x,y-.19,z,.22,.19,.12),ell(x,y-.02,z,.15,.09,.1),.08),()=>[1,1,1],[-.3,-.14,-.2],[.3,.46,.2],.02)),
+  seg:capsuleMesh(HFR,HSEG,14,5)
+};
+/* poses: [abertura, dobra da base, dobra da ponta] do indicador, do médio e do anelar (dobra positiva = para o lado da palma)
+   + polegar: base (x,y,z), direção do 1º gomo e direção do 2º gomo (no espaço da mão) */
+const FIST=[.03,1.55,1.7, 0,1.55,1.7, -.03,1.55,1.7];
+const HPOSE={
+  relax:  [.1,.35,.4, 0,.4,.45, -.12,.45,.5,   .15,.1,.05,  .6,.55,.45,  .25,.75,.55],
+  aberta: [.32,-.05,0, 0,-.05,0, -.32,-.05,0,  .15,.1,.03,  .9,.42,.05,  .75,.65,0],
+  punho:  [...FIST,                            .14,.12,.07, .15,.45,.9,  -.95,.15,.3],
+  apontar:[0,0,0, 0,1.55,1.7, -.03,1.55,1.7,   .14,.12,.07, .15,.45,.9,  -.95,.15,.3],
+  dedo:   [.03,1.55,1.7, 0,0,0, -.03,1.55,1.7, .14,.12,.07, .15,.45,.9,  -.95,.15,.3],
+  joinha: [...FIST,                            .17,.2,.05,  1,.2,0,     1,-.05,0],
+  garra:  [.38,.25,1.2, 0,.25,1.25, -.38,.25,1.2, .15,.1,.05, .85,.35,.35, .3,.3,.9],
+  concha: [.06,.5,.4, 0,.5,.4, -.06,.5,.4,     .15,.1,.06,  .35,.55,.75, .05,.65,.75]
+};
+const HFING=[[.13,.31,1],[0,.34,1.06],[-.13,.31,.96]];   /* base de cada dedo (x, y) e tamanho: indicador, médio, anelar */
+/* qual pose cada mão faz agora */
+function handPose(a){
   if((S.nut||S.nutCover>0)&&!S.down) return 'aberta';
   if(S.handPain&&S.handPain.side===a.side&&!S.down) return 'garra';   /* dedos encolhidos de dor */
   if(a.cover) return a.coverKind==='guard'?'aberta':'concha';
@@ -1942,58 +1842,49 @@ function spritePose(a){
   if(D&&D.ph==='fall'&&!D.bounces) return 'garra';
   return {relax:'relax',para:'aberta',fist:'punho',point:'apontar',flip:'dedo',thumbs:'joinha'}[handPoseName(a)]||'relax';
 }
-function drawHandSprites(list,dt){
-  if(!handReady||!list.length) return;
-  const V=M4.look(CAM,camT,[0,1,0]), R=[V[0],V[4],V[8]], Uc=[V[1],V[5],V[9]], dataB=[], dataF=[];
-  const HC=M4.pt(HEADM,cur.hc), BC=M4.pt(ballM(),[0,BALL_C,0]);
-  list.forEach(h=>{
-    const a=h.a, pose=spritePose(a), toC=norm3(sub3(CAM,h.p));
-    let yy=h.y; if(a.cover&&a.coverKind==='guard') yy=[0,1,0];
-    if(pose==='dedo') yy=norm3([yy[0]*.25,yy[1]*.25+.75,yy[2]*.25]);   /* dedo do meio sempre em pé, bem na cara */
-    let ya=dot(yy,R), yb=dot(yy,Uc); const l=Math.hypot(ya,yb); if(l<.25){ya=0; yb=1;} else {ya/=l; yb/=l;}
-    const yp=[ya*R[0]+yb*Uc[0],ya*R[1]+yb*Uc[1],ya*R[2]+yb*Uc[2]], xp=[yb*R[0]-ya*Uc[0],yb*R[1]-ya*Uc[1],yb*R[2]-ya*Uc[2]];
-    const facing=dot(h.z,toC);
-    let view=facing>0?'p':'c';
-    if(pose==='dedo'||a.coverKind==='rub') view='c';
-    if(a.stop||a.coverKind==='guard') view='p';
-    /* tamanho fixo: a mão nunca encolhe/estica ao trocar de figurinha nem ao virar de lado */
-    const hu=(S.hurt&&S.hurt[a.side<0?'hl':'hr'])||0, sw=clamp((hu-.75)/.25,0,1), s2=clamp(hu-1,0,1);
-    /* estágio 1 (até 1): inchada e latejando de leve. Estágio 2 (1 a 2, só apanhando muito mais): roxa, mais inchada e pulsando forte e rápido */
-    const beat=RM?.5:Math.pow(.5+.5*Math.sin(S.t*(7+s2*4)),3);
-    const hh=1.02/HSC*(1+sw*(.07+.06*beat)+s2*(.05+.11*beat)), ww=hh*120/140, hv=Math.min(1,hu)*(1+sw*.25*beat)+s2*(1+.35*beat);
-    const zf=a.cover?.42:.14, cu=[h.p[0]-yp[0]*.06+toC[0]*zf,h.p[1]-yp[1]*.06+toC[1]*zf,h.p[2]-yp[2]*.06+toC[2]*zf];
-    const c=[cu[0]+yp[0]*hh*.371,cu[1]+yp[1]*hh*.371,cu[2]+yp[2]*hh*.371];
-    const i=HAND_POSES.indexOf(pose)*2+(view==='p'?1:0), u0=((i%4)*512+36)/2048, uw=439/2048, v0=Math.floor(i/4)*.25, vh=.25;
-    let mir=a.side<0;
-    /* em toda pose o polegar fica do lado do corpo (pra dentro), nunca apontando pra fora */
-    {const tg=(view==='c'?-1:1)*(mir?-1:1), bc=sub3(X[J.che],h.p); if(tg*dot(xp,bc)<0) mir=!mir;}
-    const uL=mir?u0+uw:u0, uR=mir?u0:u0+uw;
-    const P=(sx,sy)=>[c[0]+xp[0]*ww*sx/2+yp[0]*hh*sy/2,c[1]+xp[1]*ww*sx/2+yp[1]*hh*sy/2,c[2]+xp[2]*ww*sx/2+yp[2]*hh*sy/2];
-    const tl=P(-1,1), tr=P(1,1), bl=P(-1,-1), br=P(1,-1);
-    a.spScr={c:wScreen(c),q:[tl,tr,br,bl].map(wScreen)};   /* onde a mão está na tela (pra acertar ela) */
-    /* a figurinha inteira fica na profundidade da própria mão (um pouco à frente): não atravessa a cabeça quando sobe */
-    const dc=[h.p[0]+toC[0]*.6,h.p[1]+toC[1]*.6,h.p[2]+toC[2]*.6];   /* profundidade puxada pra frente: a mão do lado da cabeça não afunda nela */
-    /* mão na frente do boneco (cabeça ou bolinha mais perto) vai por cima de tudo: nunca entra na cabeça; atrás dele, fica escondida */
-    const ref=dist3(h.p,HC)<dist3(h.p,BC)?HC:BC, fz=dot(sub3(h.p,ref),toC);
-    a.spFront=S.down?fz>(a.cover?-.4:.25):a.spFront?fz>-.6:fz>-.4;   /* caído: vai por cima só se estiver claramente na frente (ou cobrindo o machucado) */   /* só some atrás quando está mesmo atrás da cabeça/corpo */   /* caído: a mão respeita a profundidade (não passa por cima da cabeça) */
-    const data=a.spFront?dataF:dataB;
-    [[tl,uL,v0],[bl,uL,v0+vh],[tr,uR,v0],[tr,uR,v0],[bl,uL,v0+vh],[br,uR,v0+vh]].forEach(([q,u,v])=>data.push(q[0],q[1],q[2],u,v,dc[0],dc[1],dc[2],hv));
+/* monta uma mão: põe as peças na lista de desenho e guarda onde ela ficou na tela (para o toque) */
+function handParts(L,a,p,y,z,dt){
+  /* pose: os números vão deslizando até a pose nova (troca suave, sem estalo) */
+  const T=HPOSE[handPose(a)], k=RM?1:1-Math.exp(-dt*14);
+  if(!a.hp) a.hp=T.slice(); else for(let i=0;i<T.length;i++) a.hp[i]+=(T[i]-a.hp[i])*k;
+  const hp=a.hp;
+  /* mão machucada: estágio 1 (até 1) avermelhada, inchada e latejando de leve; estágio 2 (1 a 2) roxa, mais inchada e pulsando forte */
+  const hu=(S.hurt&&S.hurt[a.side<0?'hl':'hr'])||0, sw=clamp((hu-.75)/.25,0,1), s2=clamp(hu-1,0,1);
+  const beat=RM?.5:Math.pow(.5+.5*Math.sin(S.t*(7+s2*4)),3);
+  const g=1+sw*(.07+.06*beat)+s2*(.05+.11*beat), hv=Math.min(1,hu)*(1+sw*.25*beat)+s2*(1+.35*beat);
+  let tint=cur.skin.map(v=>clamp(v+.02,0,1));
+  if(hv>.01){const r=clamp(hv,0,1.15)*.8, pu=sstep(1,2,hv)*.95, R=[1,.7,.72], P=[.66,.48,.84]; tint=tint.map((v,i)=>{v=mix(v,v*R[i],r); return mix(v,v*P[i],pu);});}
+  /* eixos: x = lado do polegar (polegar sempre do lado certo de cada mão) */
+  const Zr=cross(y,z), X=a.side<0?Zr:[-Zr[0],-Zr[1],-Zr[2]];
+  const o=p.slice(), W=(q)=>[o[0]+(X[0]*q[0]+y[0]*q[1]+z[0]*q[2])*g,o[1]+(X[1]*q[0]+y[1]*q[1]+z[1]*q[2])*g,o[2]+(X[2]*q[0]+y[2]*q[1]+z[2]*q[2])*g];
+  /* a mão não entra na cabeça nem na bolinha (nem no chão): se a palma encostar, a mão inteira é empurrada para fora */
+  {const HC=M4.pt(HEADM,cur.hc), BC=M4.pt(ballM(),[0,BALL_C,0]);
+   for(const [c,R] of [[HC,cur.headR*PROP.s+.15*g],[BC,.49+.15*g]]){const pc=W([0,.19,0]), d=dist3(pc,c); if(d<R&&d>1e-4) for(let i=0;i<3;i++) o[i]+=(pc[i]-c[i])/d*(R-d);}
+   const pc=W([0,.19,0]); if(pc[1]<.14*g) o[1]+=.14*g-pc[1];}
+  const Wd=q=>norm3([X[0]*q[0]+y[0]*q[1]+z[0]*q[2],X[1]*q[0]+y[1]*q[1]+z[1]*q[2],X[2]*q[0]+y[2]*q[1]+z[2]*q[2]]);
+  /* peças simétricas usam sempre base de mão direita (x = y × z): nada espelhado, o contorno não inverte */
+  const Mr=(c,sx,sy,sz)=>M4.mul(basis(c,Zr,y,z),M4.S(sx*g,sy*g,sz*g));
+  L.push([HAND3.palm,Mr(o,1,1,1),.1,.6,tint]);
+  L.push([ball,Mr(W([0,-.03,0]),.19,.075,.16),.1,.6,tint]);   /* punho da luva: bolacha gordinha */
+  const pts=[W([0,-.1,0]),W([0,.19,0])];
+  const seg=(b,d,s)=>{const u=norm3(Math.abs(dot(d,z))<.9?cross(d,z):cross(d,y)), w=cross(u,d), sc=g*s;
+    L.push([HAND3.seg,M4.mul(basis(b,u,d,w),M4.S(sc,sc,sc)),.1,.6,tint]);
+    return [b[0]+d[0]*HSEG*sc,b[1]+d[1]*HSEG*sc,b[2]+d[2]*HSEG*sc];};
+  HFING.forEach(([fx,fy,s],i)=>{
+    const sp=hp[i*3], c1=hp[i*3+1], c2=c1+hp[i*3+2];
+    const j=seg(W([fx,fy,0]),Wd([Math.sin(sp)*Math.cos(c1),Math.cos(sp)*Math.cos(c1),Math.sin(c1)]),s);
+    pts.push(seg(j,Wd([Math.sin(sp)*Math.cos(c2),Math.cos(sp)*Math.cos(c2),Math.sin(c2)]),s));
   });
-  gl.useProgram(SPP.p); gl.uniformMatrix4fv(SPP.uVP,false,VP);
-  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,handTex); gl.uniform1i(SPP.uTex,0);
-  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA); gl.disable(gl.CULL_FACE);
-  [[dataB,true],[dataF,false]].forEach(([data,dt0])=>{
-    if(!data.length) return;
-    if(dt0) gl.enable(gl.DEPTH_TEST); else gl.disable(gl.DEPTH_TEST);
-    gl.bindBuffer(gl.ARRAY_BUFFER,SPP.buf); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data),gl.DYNAMIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,3,gl.FLOAT,false,36,0);
-    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1,2,gl.FLOAT,false,36,12);
-    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2,3,gl.FLOAT,false,36,20);
-    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3,1,gl.FLOAT,false,36,32);
-    gl.drawArrays(gl.TRIANGLES,0,data.length/9);
-  });
-  gl.disableVertexAttribArray(3);
-  gl.enable(gl.DEPTH_TEST); gl.disable(gl.BLEND); gl.useProgram(prog);
+  {const j=seg(W(hp.slice(9,12)),Wd(hp.slice(12,15)),.95); pts.push(seg(j,Wd(hp.slice(15,18)),.95));}
+  /* onde a mão está na tela: retângulo em volta da palma e das pontas dos dedos, alinhado com a mão (é onde o toque acerta ela) */
+  const C=wScreen(pts[1]), Y2=wScreen(W([0,.5,0])); let ay=[Y2[0]-C[0],Y2[1]-C[1]]; const l=Math.hypot(ay[0],ay[1]);
+  ay=l>4?[ay[0]/l,ay[1]/l]:[0,-1]; const ax=[-ay[1],ay[0]], pad=Math.max(12,l/.5*.11);
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  pts.forEach(q=>{const s=wScreen(q), dx=s[0]-C[0], dy=s[1]-C[1], u=dx*ax[0]+dy*ax[1], v=dx*ay[0]+dy*ay[1]; x0=Math.min(x0,u); x1=Math.max(x1,u); y0=Math.min(y0,v); y1=Math.max(y1,v);});
+  x0-=pad; x1+=pad; y0-=pad; y1+=pad;
+  const at=(u,v)=>[C[0]+ax[0]*u+ay[0]*v,C[1]+ax[1]*u+ay[1]*v];
+  a.hScr={c:C,q:[at(x0,y0),at(x1,y0),at(x1,y1),at(x0,y1)]};
+  a.hDist=dist3(pts[1],CAM);   /* a mão mais perto da câmera ganha o toque */
 }
 
 function hideDizzy(){if(DZ[0].style.display!=='none') DZ.forEach(d=>{d.style.display='none';});}
@@ -2093,14 +1984,13 @@ function pickAt(cx,cy){
   return res;
 }
 function handHurt(side,v){S.hurt=S.hurt||{bl:0,br:0,cl:0,cr:0,band:0,bbi:0}; const k=side<0?'hl':'hr', v0=S.hurt[k]||0; S.hurt[k]=Math.min(2,v0+v*(v0>=1?.5:1)); S.handHitT=S.t;}
-/* mão tocada? acerta onde a figurinha da mão está desenhada (o quadro na tela, um pouco encolhido pela margem vazia) — inclusive o dedo do meio em pé.
-   Mão da frente tem prioridade */
+/* mão tocada? acerta onde a mão 3D está desenhada (o retângulo na tela em volta da palma e dos dedos) — inclusive o dedo do meio em pé.
+   Mão mais perto da câmera tem prioridade */
 function armAt(o){
   if(!REST) return null;
-  const inQ=(a)=>{const Q=a.spScr; if(!Q) return false; const c=Q.c, k=.86;
-    const P=Q.q.map(p=>[c[0]+(p[0]-c[0])*k,c[1]+(p[1]-c[1])*k]); let sg=0;
+  const inQ=(a)=>{const Q=a.hScr; if(!Q) return false; const P=Q.q; let sg=0;
     for(let j=0;j<4;j++){const A=P[j],B=P[(j+1)%4], cr=(B[0]-A[0])*(o[1]-A[1])-(B[1]-A[1])*(o[0]-A[0]); if(cr===0) continue; if(!sg) sg=Math.sign(cr); else if(Math.sign(cr)!==sg) return false;} return true;};
-  const order=[0,1].sort((x,y)=>(S.arms[y].spFront?1:0)-(S.arms[x].spFront?1:0));
+  const order=[0,1].sort((x,y)=>(S.arms[x].hDist||0)-(S.arms[y].hDist||0));
   for(const k of order) if(inQ(S.arms[k])) return S.arms[k];
   for(let k=0;k<2;k++){const q=wScreen(X[k?J.haR:J.haL]); if(Math.hypot(o[0]-q[0],o[1]-q[1])<30) return S.arms[k];}
   return null;
@@ -2389,7 +2279,7 @@ function frame(now){
   {gl.uniformMatrix4fv(U.uVP,false,VP); gl.uniform1f(U.uOutline,0);
    gl.disable(gl.CULL_FACE); drawMesh(ENV.wall,M4.T(0,0,0),5,0); drawMesh(ENV.floor,M4.T(0,0,0),4,0);}
   gl.uniformMatrix4fv(U.uVP,false,VP); gl.uniform3fv(U.uCam,CAM); gl.uniform3fv(U.uInk,cur.ink);
-  const C=cur, hc=C.hc, E=C.eye, HS=[];
+  const C=cur, hc=C.hc, E=C.eye;
   /* lista do que desenhar: [malha, matriz, modo, brilho, tinta, espessura do contorno, sem contorno (1 = e desenha frente e verso; 2 = só sem contorno), só contorno] */
   const L=[];
   L.push([parts.ball,ballM(),1,.6]);
@@ -2434,7 +2324,7 @@ function frame(now){
   parts.acc.forEach(a=>{const M=a.noOut?HEADM:HZ;   /* acessórios: todos são da cabeça */
     L.push([a.m,M,a.noOut?.25:0,a.gloss,null,1,a.hull||a.noOut?2:0]);
     if(a.hull) L.push([a.hull,M,0,0,null,1,0,1]);});   /* malha chapada sem contorno + casca só pro contorno */
-  /* mãos: a luva desenhada persegue a mão com velocidade máxima: no tranco do golpe ela voa, mas não "teleporta" */
+  /* mãos: a luva persegue a mão com velocidade máxima: no tranco do golpe ela voa, mas não "teleporta" */
   const arms=S.arms.map((a,k)=>{
     const h=X[k?J.haR:J.haL], el=X[k?J.elR:J.elL];
     if(!a.dp||dist3(a.dp,h)>1.5) a.dp=h.slice();
@@ -2453,7 +2343,7 @@ function frame(now){
     L.push([ball,M4.mul(basis(at(-.03,.12),x,u,z),M4.S(.25,.18,.43)),0,.6,C.shoe]);
     L.push([ball,M4.mul(basis(at(.095,.12),x,u,z),M4.S(.26,.05,.44)),0,.2,C.sole]);
   });
-  /* orientação de cada mão (vai para a lista das figurinhas) */
+  /* orientação de cada mão; depois as peças da luva 3D entram na lista de desenho */
   arms.forEach(({a,e})=>{
     const fw=norm3(M4.dir(CHESTM,[0,0,1])), d0=dot(fw,e.tan), z0=norm3([fw[0]-e.tan[0]*d0,fw[1]-e.tan[1]*d0,fw[2]-e.tan[2]*d0]), x0=cross(e.tan,z0);
     /* mão relaxada: palma girada para dentro (virada para a coxa) */
@@ -2474,7 +2364,27 @@ function frame(now){
       let zz=[mix(z[0],bk[0],b),mix(z[1],bk[1],b),mix(z[2],bk[2],b)]; const dd=dot(zz,y); zz=norm3([zz[0]-y[0]*dd,zz[1]-y[1]*dd,zz[2]-y[2]*dd]);
       z=zz;
     }
-    HS.push({a:a,p:e.end,y:y,z:z});
+    /* joinha: punho deitado com os dedos enrolados virados pra você e o polegar em pé, por cima */
+    a.jb=(a.jb||0)+((handPose(a)==='joinha'?1:0)-(a.jb||0))*Math.min(1,dt*9);
+    if(a.jb>.01){
+      const side=norm3(M4.dir(CHESTM,[a.side,.15,0])), fwd=norm3(M4.dir(CHESTM,[0,0,1])), b=a.jb;
+      y=norm3([mix(y[0],side[0],b),mix(y[1],side[1],b),mix(y[2],side[2],b)]);
+      let zz=[mix(z[0],fwd[0],b),mix(z[1],fwd[1],b),mix(z[2],fwd[2],b)]; const dd=dot(zz,y); zz=norm3([zz[0]-y[0]*dd,zz[1]-y[1]*dd,zz[2]-y[2]*dd]);
+      z=zz;
+    }
+    /* protegendo: de guarda os dedos ficam pra cima e a palma virada pra fora (pra quem bate); esfregando, a palma fica
+       virada pro lugar machucado. Gira até lá aos poucos */
+    if(a.cover){a.cvO=a.cover.slice(); a.cvK=a.coverKind;}
+    a.cvb=(a.cvb||0)+((a.cover?1:0)-(a.cvb||0))*Math.min(1,dt*12);
+    if(a.cvb>.01&&a.cvO){
+      const o=a.cvO, pz=a.cvK==='guard'?o:[-o[0],-o[1],-o[2]], b=a.cvb;
+      let up=[0,1,0], du=dot(up,pz); if(Math.abs(du)>.9){up=norm3(M4.dir(CHESTM,[0,0,1])); du=dot(up,pz);}
+      up=norm3([up[0]-pz[0]*du,up[1]-pz[1]*du,up[2]-pz[2]*du]);
+      y=norm3([mix(y[0],up[0],b),mix(y[1],up[1],b),mix(y[2],up[2],b)]);
+      let zz=[mix(z[0],pz[0],b),mix(z[1],pz[1],b),mix(z[2],pz[2],b)]; const dd=dot(zz,y); zz=norm3([zz[0]-y[0]*dd,zz[1]-y[1]*dd,zz[2]-y[2]*dd]);
+      z=zz;
+    }
+    handParts(L,a,e.end,y,z,dt);
   });
   /* contorno: casca de trás de tudo, empurrada para fora, em tinta */
   const px=(3.2*dprNow)/cv.height*2;
@@ -2502,7 +2412,6 @@ function frame(now){
     if(P||(inj['-1']>=1&&inj['-1']<=3)||(inj['1']>=1&&inj['1']<=3)||inj['-1']===5||inj['1']===5){gl.uniform4f(U.uPL,a[0],a[1],b[0],b[1]); gl.uniform2f(U.uPR,R.rx*k,R.ry*k);}
     else gl.uniform2f(U.uPR,0,0);}}
   L.forEach(d=>{if(d[7]) return; if(d[6]===1) gl.disable(gl.CULL_FACE); drawMesh(d[0],d[1],d[2],d[3],d[4]); if(d[6]===1) gl.enable(gl.CULL_FACE);});
-  drawHandSprites(HS,dt);
 
   for(let i=FXP.length-1;i>=0;i--){
     const p=FXP[i]; p.life-=dt;
@@ -2521,9 +2430,8 @@ const SKINS=[['Original',[.93,.92,.96]],['Clara',[.98,.88,.82]],['Pêssego',[.98
 const hex=c=>'#'+c.map(v=>Math.round(clamp(v,0,1)*255).toString(16).padStart(2,'0')).join('');
 const unhex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255);
 function setSkinData(rgb){
-  const C=CHARS[0], k=(m,a)=>[rgb[0]*m[0]+a,rgb[1]*m[1]+a,rgb[2]*m[2]+a].map(v=>clamp(v,0,1));
+  const C=CHARS[0];
   C.skin=rgb.slice(); outfitFeet();
-  HK.SKIN=hex(k([1,1,1],.02)); HK.SH=hex(k([.8,.8,.88],0)); HK.CUP=hex(k([.9,.9,.95],0));
 }
 function applySkin(rgb){
   setSkinData(rgb); try{localStorage.setItem('joao_pele',hex(rgb));}catch(e){}
@@ -2531,7 +2439,7 @@ function applySkin(rgb){
     if(parts.head) parts.head.recolor((x,y,z)=>C.colHead(x,y,z));
     (parts.acc||[]).forEach(a=>{if(a.noOut) a.m.recolor(()=>shaveCol(rgb));});
   }
-  buildEyes(); buildHands();
+  buildEyes();
 }
 /* pele padrão: pêssego clarinho (a escolha antiga salva é trocada uma vez por ele) */
 setSkinData([.98,.86,.77]);
@@ -2582,7 +2490,7 @@ $('coins').onclick=e=>{e.stopPropagation(); renderShop(); $('shop').hidden=false
 $('shopX').onclick=()=>{$('shop').hidden=true;};
 $('shop').addEventListener('pointerdown',e=>{if(e.target===$('shop')) $('shop').hidden=true;});
 showCoins();
-buildMouths(); buildEyes(); buildHands();
+buildMouths(); buildEyes();
 setChar(ci);
 requestAnimationFrame(frame);
 })();
