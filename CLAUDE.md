@@ -38,6 +38,27 @@ xinga, chora e provoca. Cada golpe dá moedas, e com as moedas o jogador compra 
   parede emendados numa curva, sem quina), luz suave vinda de cima, pedestal redondo baixo pintado
   sob os pés e sombra macia do boneco que acompanha o corpo. Tudo desenhado no shader, sem textura.
 
+- **Interface**: estilo "embalagem de brinquedo de vinil". Fundo creme de caixa, palco como a janela de
+  plástico da caixa e botões de peça de vinil: cor sólida, contorno nanquim e uma "base" mais escura embaixo
+  (um `box-shadow` sem desfoque) que some quando o botão afunda (`translateY`). Botões com no mínimo 48 px.
+
+## Paleta da interface (variáveis no `:root` do CSS)
+
+| Variável | Cor | Onde vai |
+|---|---|---|
+| `--bg` | `#FFF4E2` creme-caixa | fundo da página, loja, painel de pele, pílula da dica, `theme-color` |
+| `--white` | `#FFFFFF` branco-vinil | botões redondos do cabeçalho, balão, linhas da loja, barra de giro, "Montando…" |
+| `--ink` | `#17302E` nanquim-verde | todo texto e contorno, moldura do palco |
+| `--ink-2` | `#2F6F66` verde-folha | subtítulo do cabeçalho, descrições da loja |
+| `--mint` / `--mint-b` | `#8EDCCB` / `#4FA595` | ferramentas soltas, "Usar", roupa não escolhida / a base delas e dos botões brancos |
+| `--stage` | `#BFE6DE` menta-cenário | fundo do palco enquanto o 3D carrega (mesma cor da parede do shader) |
+| `--gold` / `--gold-b` | `#FFC531` / `#D98E04` | moedas, comprar, "+N" que sobe / base |
+| `--coral` / `--coral-b` | `#FF8A5B` / `#D9572B` | ferramenta escolhida, selo LOJA, "Na mão" (`.own.on`), roupa e pele escolhidas, foco do teclado / base |
+| `--off` / `--off-ink` | `#E6E0D2` / `#5E5A50` | botão de comprar sem moedas |
+
+Texto é sempre nanquim (nunca branco sobre cor clara): contraste de 6:1 ou mais em todas as cores.
+O contador `.fps` é só de teste e só aparece com `#fps` no endereço.
+
 ## Como o código está organizado
 
 Tudo fica dentro de um `<script>` com uma função que roda sozinha. Seções, na ordem do arquivo
